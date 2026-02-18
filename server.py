@@ -424,7 +424,7 @@ async def search_api(
 if __name__ == "__main__":
     import uvicorn
     print("=" * 70)
-    print("CKAN Metadata Wizard — No-Code Backend")
+    print("Metadata Wizard — No-Code Backend")
     print("=" * 70)
     schema = load_schema()
     print(f"Schema version: {schema.get('version', '?')}")
