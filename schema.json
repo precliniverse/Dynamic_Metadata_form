@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/precliniverse/Dynamic_Metadata_form/refs/heads/main/schema.json",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "meta": {
     "title": "Open Science Dataset Registration Wizard",
     "description": "Schema 100% declaratif. Toute la logique metier, les APIs, les conditions et le mapping de sortie sont ici.",
-    "changelog": "3.0.0 - No-code backend: tous les mappers sont déclaratifs dans le JSON. Python = moteur générique uniquement.",
+    "changelog": "3.1.0 - Nouvelles sections: licence (SPDX), identifiants liés, financement, analyse (OBI), cohorte & points temporels. Export JSON, validation, brouillon.",
     "publisher_default": "FAIR3R"
   },
   "apis": {
@@ -110,6 +110,20 @@
         "scheme": "UBERON"
       }
     },
+    "ols_obi": {
+      "label": "OBI — Ontology for Biomedical Investigations",
+      "url": "https://www.ebi.ac.uk/ols4/api/select",
+      "query_param": "q",
+      "extra_params": {
+        "ontology": "obi",
+        "rows": 10
+      },
+      "result_path": "response.docs",
+      "mapper": {
+        "strategy": "obo_ontology",
+        "scheme": "OBI"
+      }
+    },
     "mygene": {
       "label": "MyGene.info",
       "url": "https://mygene.info/v3/query",
@@ -163,6 +177,81 @@
     }
   },
   "vocabularies": {
+    "spdx_licenses": {
+      "label": "Licences SPDX",
+      "items": [
+        {
+          "value": "CC0-1.0",
+          "label": "CC0 1.0 — Domaine public",
+          "id": "https://creativecommons.org/publicdomain/zero/1.0/"
+        },
+        {
+          "value": "CC-BY-4.0",
+          "label": "CC BY 4.0 — Attribution",
+          "id": "https://creativecommons.org/licenses/by/4.0/"
+        },
+        {
+          "value": "CC-BY-SA-4.0",
+          "label": "CC BY-SA 4.0 — Attribution-ShareAlike",
+          "id": "https://creativecommons.org/licenses/by-sa/4.0/"
+        },
+        {
+          "value": "CC-BY-NC-4.0",
+          "label": "CC BY-NC 4.0 — Attribution-NonCommercial",
+          "id": "https://creativecommons.org/licenses/by-nc/4.0/"
+        },
+        {
+          "value": "CC-BY-ND-4.0",
+          "label": "CC BY-ND 4.0 — Attribution-NoDerivs",
+          "id": "https://creativecommons.org/licenses/by-nd/4.0/"
+        },
+        {
+          "value": "ODbL-1.0",
+          "label": "ODbL 1.0 — Open Database License",
+          "id": "https://opendatacommons.org/licenses/odbl/1-0/"
+        },
+        {
+          "value": "PDDL-1.0",
+          "label": "PDDL 1.0 — Public Domain Dedication",
+          "id": "https://opendatacommons.org/licenses/pddl/1-0/"
+        },
+        {
+          "value": "MIT",
+          "label": "MIT License",
+          "id": "https://opensource.org/licenses/MIT"
+        },
+        {
+          "value": "Apache-2.0",
+          "label": "Apache License 2.0",
+          "id": "https://www.apache.org/licenses/LICENSE-2.0"
+        },
+        {
+          "value": "GPL-3.0-only",
+          "label": "GNU GPL v3.0",
+          "id": "https://www.gnu.org/licenses/gpl-3.0.html"
+        },
+        {
+          "value": "LGPL-3.0-only",
+          "label": "GNU LGPL v3.0",
+          "id": "https://www.gnu.org/licenses/lgpl-3.0.html"
+        },
+        {
+          "value": "BSD-2-Clause",
+          "label": "BSD 2-Clause License",
+          "id": "https://opensource.org/licenses/BSD-2-Clause"
+        },
+        {
+          "value": "BSD-3-Clause",
+          "label": "BSD 3-Clause License",
+          "id": "https://opensource.org/licenses/BSD-3-Clause"
+        },
+        {
+          "value": "Proprietary",
+          "label": "Proprietary / Restricted",
+          "id": ""
+        }
+      ]
+    },
     "credit_roles": {
       "label": "Roles CRediT",
       "items": [
@@ -786,6 +875,360 @@
               "valueURI": "$id"
             },
             "also_description": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "assay",
+      "title": "Type d'Analyse / Technique",
+      "icon": "🔭",
+      "open_default": false,
+      "fields": [
+        {
+          "id": "assay_type",
+          "label": "Type d'analyse (OBI)",
+          "type": "api_search",
+          "api": "ols_obi",
+          "allow_manual": true,
+          "placeholder": "Ex : RNA sequencing assay, mass spectrometry assay, microscopy…",
+          "help": "Ontologie OBI (Ontology for Biomedical Investigations). Accepte la saisie libre si non trouvé.",
+          "output": {
+            "path": "subjects",
+            "mode": "append",
+            "tpl": {
+              "subject": "Assay: $label",
+              "subjectScheme": "$scheme",
+              "valueURI": "$id"
+            },
+            "also_description": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "license",
+      "title": "Licence & Droits d'Accès",
+      "icon": "⚖️",
+      "open_default": false,
+      "fields": [
+        {
+          "id": "license_choice",
+          "label": "Licence (SPDX)",
+          "type": "select",
+          "required": false,
+          "vocabulary": "spdx_licenses",
+          "use_vocabulary_as_options": true,
+          "help": "Choisissez la licence qui régit l'utilisation de ce dataset. CC0 ou CC-BY recommandés pour les données ouvertes.",
+          "output": {
+            "path": "rightsList",
+            "mode": "append",
+            "tpl": {
+              "rights": "$label",
+              "rightsURI": "$id",
+              "rightsIdentifier": "$value",
+              "rightsIdentifierScheme": "SPDX",
+              "schemeURI": "https://spdx.org/licenses/"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "related_identifiers",
+      "title": "Identifiants Liés",
+      "icon": "🔗",
+      "open_default": false,
+      "repeatable": true,
+      "repeat_label": "Lien",
+      "add_label": "+ Ajouter un identifiant lié",
+      "output": {
+        "path": "relatedIdentifiers",
+        "mode": "collect_object"
+      },
+      "fields": [
+        {
+          "id": "relation_type",
+          "label": "Type de relation",
+          "type": "select",
+          "required": false,
+          "row": "half",
+          "options": [
+            {
+              "value": "IsSupplementTo",
+              "label": "📎 Supplément de (publication)"
+            },
+            {
+              "value": "IsDescribedBy",
+              "label": "📄 Décrit par (article, protocole)"
+            },
+            {
+              "value": "IsDerivedFrom",
+              "label": "🔄 Dérivé de (dataset source)"
+            },
+            {
+              "value": "IsPartOf",
+              "label": "📦 Fait partie de (collection)"
+            },
+            {
+              "value": "HasPart",
+              "label": "📂 Contient (sous-dataset)"
+            },
+            {
+              "value": "IsReferencedBy",
+              "label": "📌 Référencé par"
+            },
+            {
+              "value": "References",
+              "label": "🔍 Référence"
+            },
+            {
+              "value": "IsDocumentedBy",
+              "label": "📋 Documenté par (protocole)"
+            },
+            {
+              "value": "IsVariantFormOf",
+              "label": "🔀 Variante de"
+            },
+            {
+              "value": "IsIdenticalTo",
+              "label": "🟰 Identique à (miroir)"
+            },
+            {
+              "value": "IsSourceOf",
+              "label": "🌱 Source de"
+            },
+            {
+              "value": "Cites",
+              "label": "💬 Cite"
+            }
+          ],
+          "output": {
+            "obj_key": "relationType"
+          }
+        },
+        {
+          "id": "identifier_type",
+          "label": "Type d'identifiant",
+          "type": "select",
+          "required": false,
+          "row": "half",
+          "options": [
+            {
+              "value": "DOI",
+              "label": "DOI"
+            },
+            {
+              "value": "URL",
+              "label": "URL"
+            },
+            {
+              "value": "PMID",
+              "label": "PubMed ID"
+            },
+            {
+              "value": "PMCID",
+              "label": "PubMed Central ID"
+            },
+            {
+              "value": "arXiv",
+              "label": "arXiv"
+            },
+            {
+              "value": "Handle",
+              "label": "Handle"
+            },
+            {
+              "value": "RRID",
+              "label": "RRID (Research Resource)"
+            },
+            {
+              "value": "IGSN",
+              "label": "IGSN (Sample)"
+            },
+            {
+              "value": "ISBN",
+              "label": "ISBN"
+            }
+          ],
+          "output": {
+            "obj_key": "relatedIdentifierType"
+          }
+        },
+        {
+          "id": "related_identifier_value",
+          "label": "Identifiant",
+          "type": "text",
+          "required": false,
+          "row": "full",
+          "placeholder": "Ex : 10.1038/s41586-021-03819-2  ou  https://www.protocols.io/view/...",
+          "output": {
+            "obj_key": "relatedIdentifier"
+          }
+        }
+      ]
+    },
+    {
+      "id": "funding",
+      "title": "Financement",
+      "icon": "💰",
+      "open_default": false,
+      "repeatable": true,
+      "repeat_label": "Financement",
+      "add_label": "+ Ajouter un financement",
+      "output": {
+        "path": "fundingReferences",
+        "mode": "collect_object"
+      },
+      "fields": [
+        {
+          "id": "funder_name",
+          "label": "Organisme financeur",
+          "type": "text",
+          "required": true,
+          "row": "half",
+          "placeholder": "Ex : ANR, NIH, Wellcome Trust, H2020, ERC…",
+          "output": {
+            "obj_key": "funderName"
+          }
+        },
+        {
+          "id": "grant_number",
+          "label": "Numéro de grant / contrat",
+          "type": "text",
+          "required": false,
+          "row": "half",
+          "placeholder": "Ex : ANR-21-CE45-0001, R01AG012345…",
+          "output": {
+            "obj_key": "awardNumber"
+          }
+        },
+        {
+          "id": "grant_title",
+          "label": "Titre du projet financé",
+          "type": "text",
+          "required": false,
+          "row": "full",
+          "placeholder": "Titre complet du projet ou de la subvention",
+          "output": {
+            "obj_key": "awardTitle"
+          }
+        }
+      ]
+    },
+    {
+      "id": "cohort",
+      "title": "Cohorte & Points Temporels",
+      "icon": "📅",
+      "open_default": false,
+      "fields": [
+        {
+          "id": "cohort_sex",
+          "label": "Sexe",
+          "type": "select",
+          "required": false,
+          "row": "half",
+          "default": "",
+          "options": [
+            {
+              "value": "",
+              "label": "— Non spécifié —"
+            },
+            {
+              "value": "Both",
+              "label": "♀♂ Les deux sexes"
+            },
+            {
+              "value": "Male",
+              "label": "♂ Mâle uniquement"
+            },
+            {
+              "value": "Female",
+              "label": "♀ Femelle uniquement"
+            },
+            {
+              "value": "Unknown",
+              "label": "❓ Inconnu"
+            }
+          ],
+          "output": {
+            "path": "descriptions",
+            "mode": "append_if",
+            "tpl": {
+              "description": "Cohort sex: $value",
+              "descriptionType": "TechnicalInfo"
+            }
+          }
+        },
+        {
+          "id": "cohort_size",
+          "label": "Effectif total (n)",
+          "type": "number",
+          "required": false,
+          "row": "half",
+          "min": 1,
+          "placeholder": "Ex : 24",
+          "output": {
+            "path": "descriptions",
+            "mode": "append_if",
+            "tpl": {
+              "description": "Cohort size: $value subjects",
+              "descriptionType": "TechnicalInfo"
+            }
+          }
+        },
+        {
+          "id": "cohort_age_value",
+          "label": "Âge",
+          "type": "number",
+          "required": false,
+          "row": "half",
+          "min": 0,
+          "placeholder": "Ex : 6",
+          "output": null
+        },
+        {
+          "id": "cohort_age_unit",
+          "label": "Unité d'âge",
+          "type": "select",
+          "required": false,
+          "row": "half",
+          "default": "weeks",
+          "options": [
+            {
+              "value": "days",
+              "label": "Jours"
+            },
+            {
+              "value": "weeks",
+              "label": "Semaines"
+            },
+            {
+              "value": "months",
+              "label": "Mois"
+            },
+            {
+              "value": "years",
+              "label": "Années"
+            }
+          ],
+          "output": null
+        },
+        {
+          "id": "timepoints",
+          "label": "Points temporels",
+          "type": "text",
+          "required": false,
+          "row": "full",
+          "placeholder": "Ex : 3, 6, 12 months post-injection; baseline, 24h, 48h",
+          "help": "Décrivez les temps de mesure ou de sacrifice.",
+          "output": {
+            "path": "descriptions",
+            "mode": "append_if",
+            "tpl": {
+              "description": "Timepoints: $value",
+              "descriptionType": "TechnicalInfo"
+            }
           }
         }
       ]
