@@ -1,0 +1,794 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/precliniverse/Dynamic_Metadata_form/refs/heads/main/schema.json",
+  "version": "3.0.0",
+  "meta": {
+    "title": "Open Science Dataset Registration Wizard",
+    "description": "Schema 100% declaratif. Toute la logique metier, les APIs, les conditions et le mapping de sortie sont ici.",
+    "changelog": "3.0.0 - No-code backend: tous les mappers sont déclaratifs dans le JSON. Python = moteur générique uniquement.",
+    "publisher_default": "FAIR3R"
+  },
+  "apis": {
+    "orcid": {
+      "label": "ORCID",
+      "url": "https://pub.orcid.org/v3.0/expanded-search",
+      "headers": {
+        "Accept": "application/vnd.orcid+json"
+      },
+      "query_param": "q",
+      "result_path": "expanded-result",
+      "result_limit": 8,
+      "mapper": {
+        "strategy": "nested_object",
+        "label": "{{given-names}} {{family-names}}",
+        "sublabel": "{{institution-name.[0]}}",
+        "id": "https://orcid.org/{{orcid-id}}",
+        "scheme": "ORCID"
+      }
+    },
+    "ror": {
+      "label": "ROR",
+      "url": "https://api.ror.org/organizations",
+      "query_param": "query",
+      "result_path": "items",
+      "result_limit": 10,
+      "mapper": {
+        "strategy": "array_find",
+        "label": "{{names.[?types=ror_display].value || names.[?types=label].value}}",
+        "sublabel": "{{addresses.[0].city}}, {{country.country_name}}",
+        "id": "{{id}}",
+        "scheme": "ROR"
+      }
+    },
+    "ols_ncbitaxon": {
+      "label": "NCBI Taxonomy (OLS4)",
+      "url": "https://www.ebi.ac.uk/ols4/api/select",
+      "query_param": "q",
+      "extra_params": {
+        "ontology": "ncbitaxon",
+        "rows": 10
+      },
+      "result_path": "response.docs",
+      "mapper": {
+        "strategy": "obo_ontology",
+        "scheme": "NCBITaxon"
+      }
+    },
+    "ols_efo": {
+      "label": "EFO (OLS4)",
+      "url": "https://www.ebi.ac.uk/ols4/api/select",
+      "query_param": "q",
+      "extra_params": {
+        "ontology": "efo",
+        "rows": 10
+      },
+      "result_path": "response.docs",
+      "mapper": {
+        "strategy": "obo_ontology",
+        "scheme": "EFO"
+      }
+    },
+    "ols_chebi": {
+      "label": "ChEBI (OLS4)",
+      "url": "https://www.ebi.ac.uk/ols4/api/select",
+      "query_param": "q",
+      "extra_params": {
+        "ontology": "chebi",
+        "rows": 10
+      },
+      "result_path": "response.docs",
+      "mapper": {
+        "strategy": "obo_ontology",
+        "scheme": "ChEBI"
+      }
+    },
+    "ols_doid": {
+      "label": "Disease Ontology (OLS4)",
+      "url": "https://www.ebi.ac.uk/ols4/api/select",
+      "query_param": "q",
+      "extra_params": {
+        "ontology": "doid",
+        "rows": 10
+      },
+      "result_path": "response.docs",
+      "mapper": {
+        "strategy": "obo_ontology",
+        "scheme": "DOID"
+      }
+    },
+    "ols_uberon": {
+      "label": "UBERON (OLS4)",
+      "url": "https://www.ebi.ac.uk/ols4/api/select",
+      "query_param": "q",
+      "extra_params": {
+        "ontology": "uberon",
+        "rows": 10
+      },
+      "result_path": "response.docs",
+      "mapper": {
+        "strategy": "obo_ontology",
+        "scheme": "UBERON"
+      }
+    },
+    "mygene": {
+      "label": "MyGene.info",
+      "url": "https://mygene.info/v3/query",
+      "query_param": "q",
+      "extra_params": {
+        "fields": "symbol,name,taxid,MGI,RGD,ZFIN,ensembl.gene,entrezgene"
+      },
+      "extra_params_from_context": {
+        "species": "organism_taxon_id"
+      },
+      "result_path": "hits",
+      "result_limit": 8,
+      "mapper": {
+        "strategy": "flat_object",
+        "label": "{{symbol}}",
+        "sublabel": "{{name}}",
+        "id": "https://identifiers.org/ncbigene:{{_id}}",
+        "scheme": "GeneID",
+        "xrefs": {
+          "ncbi_gene": {
+            "id": "{{_id}}",
+            "uri": "https://identifiers.org/ncbigene:{{_id}}",
+            "label": "NCBI Gene"
+          },
+          "mgi": {
+            "condition": "{{MGI}}",
+            "id": "{{MGI}}",
+            "uri": "https://identifiers.org/mgi:{{MGI}}",
+            "label": "MGI"
+          },
+          "rgd": {
+            "condition": "{{RGD}}",
+            "id": "{{RGD}}",
+            "uri": "https://identifiers.org/rgd:{{RGD}}",
+            "label": "RGD"
+          },
+          "zfin": {
+            "condition": "{{ZFIN}}",
+            "id": "{{ZFIN}}",
+            "uri": "https://identifiers.org/zfin:{{ZFIN}}",
+            "label": "ZFIN"
+          },
+          "ensembl": {
+            "condition": "{{ensembl.gene}}",
+            "id": "{{ensembl.gene}}",
+            "uri": "https://identifiers.org/ensembl:{{ensembl.gene}}",
+            "label": "Ensembl"
+          }
+        }
+      }
+    }
+  },
+  "vocabularies": {
+    "credit_roles": {
+      "label": "Roles CRediT",
+      "items": [
+        {
+          "id": "https://credit.niso.org/contributor-roles/conceptualization/",
+          "label": "Conceptualization"
+        },
+        {
+          "id": "https://credit.niso.org/contributor-roles/data-curation/",
+          "label": "Data Curation"
+        },
+        {
+          "id": "https://credit.niso.org/contributor-roles/formal-analysis/",
+          "label": "Formal Analysis"
+        },
+        {
+          "id": "https://credit.niso.org/contributor-roles/funding-acquisition/",
+          "label": "Funding Acquisition"
+        },
+        {
+          "id": "https://credit.niso.org/contributor-roles/investigation/",
+          "label": "Investigation"
+        },
+        {
+          "id": "https://credit.niso.org/contributor-roles/methodology/",
+          "label": "Methodology"
+        },
+        {
+          "id": "https://credit.niso.org/contributor-roles/project-administration/",
+          "label": "Project Administration"
+        },
+        {
+          "id": "https://credit.niso.org/contributor-roles/resources/",
+          "label": "Resources"
+        },
+        {
+          "id": "https://credit.niso.org/contributor-roles/software/",
+          "label": "Software"
+        },
+        {
+          "id": "https://credit.niso.org/contributor-roles/supervision/",
+          "label": "Supervision"
+        },
+        {
+          "id": "https://credit.niso.org/contributor-roles/validation/",
+          "label": "Validation"
+        },
+        {
+          "id": "https://credit.niso.org/contributor-roles/visualization/",
+          "label": "Visualization"
+        },
+        {
+          "id": "https://credit.niso.org/contributor-roles/writing-original-draft/",
+          "label": "Writing - Original Draft"
+        },
+        {
+          "id": "https://credit.niso.org/contributor-roles/writing-review-editing/",
+          "label": "Writing - Review and Editing"
+        }
+      ]
+    },
+    "organism_presets": {
+      "label": "Organismes modeles",
+      "items": [
+        {
+          "id": "http://purl.obolibrary.org/obo/NCBITaxon_10090",
+          "label": "Mus musculus",
+          "display": "Souris (Mus musculus)",
+          "emoji": "🐭",
+          "taxon_id": "10090",
+          "scheme": "NCBITaxon",
+          "triggers": [
+            "strain_search",
+            "gene_search"
+          ]
+        },
+        {
+          "id": "http://purl.obolibrary.org/obo/NCBITaxon_10116",
+          "label": "Rattus norvegicus",
+          "display": "Rat (Rattus norvegicus)",
+          "emoji": "🐀",
+          "taxon_id": "10116",
+          "scheme": "NCBITaxon",
+          "triggers": [
+            "strain_search",
+            "gene_search"
+          ]
+        },
+        {
+          "id": "http://purl.obolibrary.org/obo/NCBITaxon_7955",
+          "label": "Danio rerio",
+          "display": "Poisson-zebre (Danio rerio)",
+          "emoji": "🐟",
+          "taxon_id": "7955",
+          "scheme": "NCBITaxon",
+          "triggers": [
+            "gene_search"
+          ]
+        },
+        {
+          "id": "http://purl.obolibrary.org/obo/NCBITaxon_7227",
+          "label": "Drosophila melanogaster",
+          "display": "Drosophile (D. melanogaster)",
+          "emoji": "🪰",
+          "taxon_id": "7227",
+          "scheme": "NCBITaxon",
+          "triggers": [
+            "gene_search"
+          ]
+        },
+        {
+          "id": "__OTHER__",
+          "label": "Autre",
+          "display": "Autre (Recherche NCBI Taxonomy)",
+          "emoji": "🔍",
+          "taxon_id": null,
+          "scheme": "NCBITaxon",
+          "triggers": [
+            "organism_search"
+          ]
+        }
+      ]
+    }
+  },
+  "sections": [
+    {
+      "id": "title",
+      "title": "Titre du Dataset",
+      "icon": "📄",
+      "open_default": true,
+      "fields": [
+        {
+          "id": "title_main",
+          "label": "Titre principal",
+          "type": "text",
+          "required": true,
+          "row": "full",
+          "placeholder": "Ex : Transcriptome hippocampique de souris APP/PS1 a 6 mois",
+          "output": {
+            "path": "titles",
+            "mode": "append",
+            "tpl": {
+              "title": "$value"
+            }
+          }
+        },
+        {
+          "id": "title_alt",
+          "label": "Titre alternatif",
+          "type": "text",
+          "required": false,
+          "row": "half",
+          "placeholder": "Traduction anglaise ou acronyme",
+          "output": {
+            "path": "titles",
+            "mode": "append_if",
+            "tpl": {
+              "title": "$value",
+              "titleType": "AlternativeTitle"
+            }
+          }
+        },
+        {
+          "id": "publication_year",
+          "label": "Annee de publication",
+          "type": "number",
+          "required": true,
+          "row": "half",
+          "default": 2024,
+          "min": 2000,
+          "max": 2030,
+          "output": {
+            "path": "publicationYear",
+            "mode": "set_int"
+          }
+        },
+        {
+          "id": "resource_type",
+          "label": "Type de ressource",
+          "type": "select",
+          "required": true,
+          "default": "Dataset",
+          "options": [
+            {
+              "value": "Dataset",
+              "label": "📊 Dataset (données tabulaires, séries temporelles)"
+            },
+            {
+              "value": "Collection",
+              "label": "📦 Collection (ensemble de datasets)"
+            },
+            {
+              "value": "Image",
+              "label": "🖼️  Image (microscopy, imaging)"
+            },
+            {
+              "value": "Text",
+              "label": "📄 Text (rapport, protocole)"
+            },
+            {
+              "value": "Software",
+              "label": "💻 Software (code, pipeline)"
+            },
+            {
+              "value": "PhysicalObject",
+              "label": "🧪 PhysicalObject (échantillon biologique)"
+            },
+            {
+              "value": "Model",
+              "label": "🧠 Model (modèle computationnel)"
+            },
+            {
+              "value": "Workflow",
+              "label": "🔄 Workflow (pipeline d'analyse)"
+            },
+            {
+              "value": "Other",
+              "label": "🔹 Other"
+            }
+          ],
+          "row": "full",
+          "output": {
+            "path": "types",
+            "mode": "append",
+            "tpl": {
+              "resourceType": "$value",
+              "resourceTypeGeneral": "$value"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "creators",
+      "title": "Auteurs & Contributeurs",
+      "icon": "👥",
+      "open_default": true,
+      "repeatable": true,
+      "repeat_label": "Auteur",
+      "add_label": "+ Ajouter un auteur",
+      "output": {
+        "path": "creators",
+        "mode": "collect_object"
+      },
+      "fields": [
+        {
+          "id": "given_name",
+          "label": "Prenom",
+          "type": "text",
+          "required": true,
+          "row": "half",
+          "output": {
+            "obj_key": "givenName"
+          }
+        },
+        {
+          "id": "family_name",
+          "label": "Nom de famille",
+          "type": "text",
+          "required": true,
+          "row": "half",
+          "output": {
+            "obj_key": "familyName"
+          }
+        },
+        {
+          "id": "orcid",
+          "label": "ORCID iD",
+          "type": "api_search",
+          "api": "orcid",
+          "orcid_autofill_from": [
+            "given_name",
+            "family_name"
+          ],
+          "allow_manual": false,
+          "placeholder": "Prenom Nom a rechercher…",
+          "output": {
+            "obj_key": "nameIdentifiers",
+            "mode": "wrap_array",
+            "map": {
+              "nameIdentifier": "$id",
+              "nameIdentifierScheme": "ORCID",
+              "schemeURI": "https://orcid.org/"
+            }
+          }
+        },
+        {
+          "id": "affiliation",
+          "label": "Affiliation (ROR)",
+          "type": "api_search",
+          "api": "ror",
+          "allow_manual": true,
+          "placeholder": "Nom de l institution, ville…",
+          "output": {
+            "obj_key": "affiliation",
+            "mode": "wrap_array",
+            "map": {
+              "affiliation": "$label",
+              "affiliationIdentifier": "$id",
+              "affiliationIdentifierScheme": "ROR",
+              "schemeURI": "https://ror.org/"
+            }
+          }
+        },
+        {
+          "id": "contributor_roles",
+          "label": "Rôles dans le projet (CRediT)",
+          "type": "multi_select",
+          "vocabulary": "credit_roles",
+          "help": "Selon la taxonomie CRediT (NISO). Ces personnes seront listées comme contributeurs dans les métadonnées DataCite.",
+          "output": {
+            "path": "contributors",
+            "mode": "append_from_array",
+            "tpl": {
+              "name": "$creator_name",
+              "nameType": "Personal",
+              "contributorType": "Other",
+              "contributorRoles": [
+                {
+                  "contributorRole": "$label",
+                  "contributorRoleURI": "$id",
+                  "contributorRoleScheme": "CRediT",
+                  "contributorRoleSchemeURI": "https://credit.niso.org/"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "description",
+      "title": "Description du dataset",
+      "icon": "📝",
+      "open_default": true,
+      "fields": [
+        {
+          "id": "abstract",
+          "label": "Résumé / Abstract",
+          "type": "textarea",
+          "required": false,
+          "rows": 6,
+          "placeholder": "Décrivez brièvement le contexte, les objectifs et les principaux résultats de ce dataset…",
+          "help": "Ce texte apparaîtra comme description principale dans les métadonnées DataCite.",
+          "output": {
+            "path": "descriptions",
+            "mode": "append",
+            "tpl": {
+              "description": "$value",
+              "descriptionType": "Abstract"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "organism",
+      "title": "Modele Biologique",
+      "icon": "🐭",
+      "open_default": true,
+      "fields": [
+        {
+          "id": "organism_choice",
+          "label": "Organisme modele",
+          "type": "preset_or_search",
+          "vocabulary": "organism_presets",
+          "search_api": "ols_ncbitaxon",
+          "required": true,
+          "allow_manual": false,
+          "placeholder": "Rechercher dans NCBI Taxonomy…",
+          "output": {
+            "path": "subjects",
+            "mode": "append",
+            "tpl": {
+              "subject": "$label",
+              "subjectScheme": "NCBITaxon",
+              "valueURI": "$id",
+              "schemeURI": "http://purl.obolibrary.org/obo/"
+            },
+            "also_description": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "strain",
+      "title": "Fond Genetique / Souche",
+      "icon": "🧬",
+      "open_default": true,
+      "condition": {
+        "type": "organism_trigger",
+        "trigger": "strain_search"
+      },
+      "fields": [
+        {
+          "id": "strain_search",
+          "label": "Souche ou lignee",
+          "type": "api_search",
+          "api": "ols_efo",
+          "allow_manual": true,
+          "placeholder": "Ex : C57BL/6J, BALB/c, Wistar, Sprague-Dawley…",
+          "output": {
+            "path": "subjects",
+            "mode": "append",
+            "tpl": {
+              "subject": "Strain: $label",
+              "subjectScheme": "$scheme",
+              "valueURI": "$id"
+            },
+            "also_description": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "interventions",
+      "title": "Interventions Experimentales",
+      "icon": "🔬",
+      "open_default": true,
+      "fields": [
+        {
+          "id": "intervention_types",
+          "label": "Selectionnez les interventions a decrire",
+          "type": "checkbox_group",
+          "options": [
+            {
+              "value": "GENE",
+              "label": "Modification Genetique",
+              "emoji": "🧬",
+              "opens_section": "genes"
+            },
+            {
+              "value": "CHEM",
+              "label": "Traitement Chimique / Pharmacologique",
+              "emoji": "💊",
+              "opens_section": "chemicals"
+            },
+            {
+              "value": "DIET",
+              "label": "Regime Alimentaire",
+              "emoji": "🥗",
+              "opens_section": "diet"
+            },
+            {
+              "value": "DIS",
+              "label": "Modele de Maladie",
+              "emoji": "🏥",
+              "opens_section": "disease"
+            },
+            {
+              "value": "ANAT",
+              "label": "Tissu / Organe d interet",
+              "emoji": "🫀",
+              "opens_section": "anatomy"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "genes",
+      "title": "Genes Impliques",
+      "icon": "🧬",
+      "open_default": true,
+      "condition": {
+        "type": "checkbox_includes",
+        "field_id": "intervention_types",
+        "value": "GENE"
+      },
+      "repeatable": true,
+      "repeat_label": "Gene",
+      "add_label": "+ Ajouter un gene",
+      "fields": [
+        {
+          "id": "gene_search",
+          "label": "Symbole, nom ou identifiant du gene",
+          "type": "api_search",
+          "api": "mygene",
+          "use_organism_taxon": true,
+          "allow_manual": true,
+          "show_xrefs": true,
+          "help": "Accepte : symbole (Apoe), MGI:88057, ENSMUSG00000002985, NCBI ID (11287)",
+          "placeholder": "Ex : Apoe, MGI:88057, ENSMUSG00000002985…",
+          "output": {
+            "path": "subjects",
+            "mode": "append",
+            "tpl": {
+              "subject": "Gene: $label",
+              "subjectScheme": "$scheme",
+              "valueURI": "$id"
+            },
+            "xref_key": "identifiers",
+            "also_description": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "chemicals",
+      "title": "Molecules & Traitements",
+      "icon": "💊",
+      "open_default": true,
+      "condition": {
+        "type": "checkbox_includes",
+        "field_id": "intervention_types",
+        "value": "CHEM"
+      },
+      "repeatable": true,
+      "repeat_label": "Molecule",
+      "add_label": "+ Ajouter une molecule",
+      "fields": [
+        {
+          "id": "chem_search",
+          "label": "Molecule (ChEBI)",
+          "type": "api_search",
+          "api": "ols_chebi",
+          "allow_manual": true,
+          "placeholder": "Ex : Tamoxifen, Doxycycline, Metformin…",
+          "output": {
+            "path": "subjects",
+            "mode": "append",
+            "tpl": {
+              "subject": "$label",
+              "subjectScheme": "$scheme",
+              "valueURI": "$id"
+            },
+            "also_description": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "diet",
+      "title": "Regime Alimentaire",
+      "icon": "🥗",
+      "open_default": true,
+      "condition": {
+        "type": "checkbox_includes",
+        "field_id": "intervention_types",
+        "value": "DIET"
+      },
+      "fields": [
+        {
+          "id": "diet_search",
+          "label": "Regime (EFO)",
+          "type": "api_search",
+          "api": "ols_efo",
+          "allow_manual": true,
+          "placeholder": "Ex : High fat diet, Caloric restriction, Western diet…",
+          "output": {
+            "path": "subjects",
+            "mode": "append",
+            "tpl": {
+              "subject": "$label",
+              "subjectScheme": "$scheme",
+              "valueURI": "$id"
+            },
+            "also_description": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "disease",
+      "title": "Modele de Maladie",
+      "icon": "🏥",
+      "open_default": true,
+      "condition": {
+        "type": "checkbox_includes",
+        "field_id": "intervention_types",
+        "value": "DIS"
+      },
+      "fields": [
+        {
+          "id": "disease_search",
+          "label": "Maladie modelisee (DOID)",
+          "type": "api_search",
+          "api": "ols_doid",
+          "allow_manual": true,
+          "placeholder": "Ex : Alzheimer disease, Type 2 diabetes mellitus…",
+          "output": {
+            "path": "subjects",
+            "mode": "append",
+            "tpl": {
+              "subject": "$label",
+              "subjectScheme": "$scheme",
+              "valueURI": "$id"
+            },
+            "also_description": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "anatomy",
+      "title": "Tissu / Organe d interet",
+      "icon": "🫀",
+      "open_default": true,
+      "condition": {
+        "type": "checkbox_includes",
+        "field_id": "intervention_types",
+        "value": "ANAT"
+      },
+      "repeatable": true,
+      "repeat_label": "Tissu",
+      "add_label": "+ Ajouter un tissu",
+      "fields": [
+        {
+          "id": "anat_search",
+          "label": "Tissu ou organe (UBERON)",
+          "type": "api_search",
+          "api": "ols_uberon",
+          "allow_manual": true,
+          "placeholder": "Ex : Brain, Hippocampus, Liver, Heart…",
+          "output": {
+            "path": "subjects",
+            "mode": "append",
+            "tpl": {
+              "subject": "$label",
+              "subjectScheme": "$scheme",
+              "valueURI": "$id"
+            },
+            "also_description": true
+          }
+        }
+      ]
+    }
+  ]
+}

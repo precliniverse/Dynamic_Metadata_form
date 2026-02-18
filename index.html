@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Open Science Wizard — CKAN</title>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <style>
+    :root{--bg:#0f1117;--sur:#1a1d2e;--sur2:#232640;--brd:#2e3155;--acc:#6c63ff;--acc2:#a78bfa;--ok:#10b981;--warn:#f59e0b;--err:#ef4444;--txt:#e2e8f0;--mute:#8892a4;--r:12px;--rs:8px}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--txt);font-family:'Inter',system-ui,sans-serif;font-size:14px;line-height:1.6}
+    .shell{max-width:860px;margin:0 auto;padding:24px 16px 120px}
+    .hdr{text-align:center;padding:30px 0 32px}
+    .badge-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(108,99,255,.12);border:1px solid rgba(108,99,255,.3);border-radius:20px;padding:4px 14px;font-size:12px;color:var(--acc2);margin-bottom:14px}
+    .hdr h1{font-size:26px;font-weight:700;background:linear-gradient(135deg,#e2e8f0,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px}
+    .hdr p{color:var(--mute);font-size:13px}
+    .vbanner{border-radius:var(--r);padding:10px 16px;margin-bottom:16px;display:flex;align-items:flex-start;gap:9px;font-size:13px;border:1px solid}
+    .vb-checking{background:rgba(108,99,255,.07);border-color:rgba(108,99,255,.3);color:var(--acc2)}
+    .vb-ok      {background:rgba(16,185,129,.07); border-color:rgba(16,185,129,.3);color:#6ee7b7}
+    .vb-update  {background:rgba(245,158,11,.07); border-color:rgba(245,158,11,.3);color:#fcd34d}
+    .vb-error   {background:rgba(239,68,68,.07);  border-color:rgba(239,68,68,.3); color:#fca5a5}
+    .prog{background:var(--sur);border-radius:3px;height:3px;margin-bottom:24px;overflow:hidden}
+    .prog-bar{height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2));border-radius:3px;transition:width .4s}
+    .card{background:var(--sur);border:1px solid var(--brd);border-radius:var(--r);margin-bottom:10px;overflow:hidden}
+    .card-hd{display:flex;align-items:center;gap:10px;padding:14px 18px;cursor:pointer;background:var(--sur2);user-select:none}
+    .card-icon{font-size:18px}.card-title{font-weight:600;font-size:15px;flex:1}
+    .card-badge{background:rgba(108,99,255,.14);color:var(--acc2);border-radius:10px;padding:1px 9px;font-size:11px;font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .chevron{color:var(--mute);font-size:11px;transition:transform .22s}.chevron.open{transform:rotate(90deg)}
+    .card-bd{padding:20px}
+    .field{margin-bottom:16px}.field:last-child{margin-bottom:0}
+    .field-row{display:flex;gap:14px}.field-row>*{flex:1}
+    @media(max-width:520px){.field-row{flex-direction:column}}
+    label.flbl{display:block;font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
+    .req{color:var(--err)}.help{font-size:11px;color:var(--mute);margin-top:4px;line-height:1.45}
+    input[type=text],input[type=number]{width:100%;background:var(--bg);border:1px solid var(--brd);border-radius:var(--rs);color:var(--txt);padding:9px 12px;font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s}
+    input:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(108,99,255,.14)}
+    input::placeholder{color:var(--mute)}
+    .sw{position:relative}.sw input{padding-right:90px}
+    .sbtn{position:absolute;right:5px;top:50%;transform:translateY(-50%);background:var(--acc);color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:opacity .2s}
+    .sbtn:hover{opacity:.85}.sbtn:disabled{opacity:.5;cursor:wait}
+    .sbtn-green{background:linear-gradient(135deg,#22c55e,#16a34a)}
+    .orcid-row{display:flex;gap:8px}.orcid-row input{flex:1;min-width:0}
+    .orcid-row .sbtn{position:static;transform:none;white-space:nowrap;flex-shrink:0}
+    .rlist{margin-top:6px;border:1px solid var(--brd);border-radius:var(--rs);background:var(--bg);max-height:240px;overflow-y:auto}
+    .ritem{display:flex;align-items:center;padding:9px 13px;cursor:pointer;border-bottom:1px solid var(--brd);transition:background .13s}
+    .ritem:last-child{border-bottom:none}.ritem:hover{background:var(--sur2)}
+    .rlbl{font-size:13px;font-weight:500;flex:1}.rsub{font-size:11px;color:var(--mute)}.rchk{color:var(--ok);margin-left:auto;font-size:14px}
+    .nores{padding:10px 13px;color:var(--mute);font-size:13px}
+    .s-pill{display:inline-flex;align-items:center;flex-wrap:wrap;gap:6px;background:rgba(108,99,255,.11);border:1px solid rgba(108,99,255,.28);border-radius:20px;padding:5px 10px 5px 13px;font-size:12px;color:var(--acc2);margin-top:7px}
+    .pill-x{background:none;border:none;color:var(--mute);cursor:pointer;font-size:15px;line-height:1;padding:0;transition:color .15s}.pill-x:hover{color:var(--err)}
+    .manual-tag{font-size:10px;opacity:.55;font-style:italic}
+    .btn-keep{display:inline-flex;align-items:center;gap:6px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.28);color:#fcd34d;border-radius:var(--rs);padding:6px 13px;font-size:12px;font-weight:600;cursor:pointer;margin-top:7px;transition:background .15s}
+    .btn-keep:hover{background:rgba(245,158,11,.16)}
+    .xw{margin-top:9px}.xt{font-size:10px;font-weight:700;color:var(--mute);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+    .xg{display:flex;flex-wrap:wrap;gap:5px}
+    .xb{display:inline-flex;align-items:center;gap:4px;background:var(--sur2);border:1px solid var(--brd);border-radius:6px;padding:3px 9px;font-size:11px;font-family:monospace}
+    .xdb{color:var(--mute);font-size:9px;text-transform:uppercase;letter-spacing:.04em}
+    .xid{color:var(--acc2);font-weight:600;text-decoration:none}.xid:hover{text-decoration:underline}
+    .preset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:7px;margin-bottom:10px}
+    .pbtn{background:var(--bg);border:1px solid var(--brd);border-radius:var(--rs);color:var(--txt);padding:9px 11px;font-size:13px;font-weight:500;cursor:pointer;transition:all .18s;text-align:left;line-height:1.3}
+    .pbtn:hover{border-color:var(--acc);background:var(--sur2)}.pbtn.active{border-color:var(--acc);background:rgba(108,99,255,.14);color:var(--acc2)}
+    .chk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:7px;margin-top:8px}
+    .chk{display:flex;align-items:center;gap:9px;background:var(--bg);border:1px solid var(--brd);border-radius:var(--rs);padding:9px 11px;cursor:pointer;transition:all .18s}
+    .chk:hover{border-color:var(--acc);background:var(--sur2)}.chk.on{border-color:var(--acc);background:rgba(108,99,255,.1)}
+    .chkbox{width:17px;height:17px;border:2px solid var(--brd);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .18s}
+    .chk.on .chkbox{background:var(--acc);border-color:var(--acc)}
+    .tick{width:8px;height:5px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translateY(-1px);opacity:0}.chk.on .tick{opacity:1}
+    .chklbl{font-size:13px;font-weight:500}
+    .tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+    .tag{border-radius:20px;padding:4px 12px;font-size:12px;cursor:pointer;border:1px solid;transition:all .13s;font-weight:500}
+    .tag.off{background:transparent;border-color:var(--brd);color:var(--mute)}.tag.off:hover{border-color:var(--acc);color:var(--acc2);background:rgba(108,99,255,.07)}.tag.on{background:var(--acc);border-color:var(--acc);color:#fff}
+    .rep-blk{border:1px solid var(--brd);border-radius:var(--rs);padding:15px;margin-bottom:11px;background:var(--bg)}
+    .rep-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .rep-idx{background:rgba(108,99,255,.14);color:var(--acc2);border-radius:10px;padding:2px 10px;font-size:12px;font-weight:700}
+    .rep-del{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);color:var(--err);border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer}.rep-del:hover{background:rgba(239,68,68,.16)}
+    .btn-add{display:flex;align-items:center;justify-content:center;width:100%;background:rgba(108,99,255,.05);border:1px dashed rgba(108,99,255,.3);color:var(--acc2);border-radius:var(--rs);padding:10px;font-size:13px;font-weight:500;cursor:pointer;transition:all .18s;margin-top:4px}
+    .btn-add:hover{background:rgba(108,99,255,.13);border-color:var(--acc)}
+    .sub-wrap{text-align:center;padding:32px 0 16px}
+    .btn-sub{background:linear-gradient(135deg,var(--acc),#8b5cf6);color:#fff;border:none;border-radius:var(--r);padding:13px 44px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(108,99,255,.33);transition:transform .2s,box-shadow .2s}
+    .btn-sub:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(108,99,255,.48)}
+    .json-wrap{margin-top:22px}.json-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+    .json-t{font-size:13px;font-weight:600;color:var(--mute)}
+    .btn-copy{background:var(--sur2);border:1px solid var(--brd);color:var(--mute);border-radius:6px;padding:4px 12px;font-size:12px;cursor:pointer}.btn-copy:hover{color:var(--txt)}
+    .json-pre{background:var(--bg);border:1px solid var(--brd);border-radius:var(--r);padding:16px;font-family:monospace;font-size:12px;line-height:1.7;color:#86efac;max-height:400px;overflow-y:auto;white-space:pre-wrap}
+    .spin{display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle}
+    .spin-lg{width:26px;height:26px;border-width:3px}
+    @keyframes sp{to{transform:rotate(360deg)}}
+    .loading-st{text-align:center;padding:60px 0;color:var(--mute)}
+  </style>
+</head>
+<body>
+<div class="shell" x-data="wizard()" x-init="init()">
+
+  <div class="hdr">
+    <div class="badge-pill">🔬 Open Science Metadata Wizard</div>
+    <h1 x-text="schema ? schema.meta.title : 'Chargement…'"></h1>
+    <p>Formulaire piloté par <code>schema.json</code> — synchronisé depuis GitHub à chaque chargement</p>
+  </div>
+
+  <template x-if="vStatus !== 'idle'">
+    <div class="vbanner" :class="'vb-'+vStatus">
+      <span x-text="{'checking':'⏳','ok':'✅','update':'⚠️','error':'🔌'}[vStatus]"></span>
+      <span>
+        <template x-if="vStatus==='checking'"><span>Vérification de la version du schéma…</span></template>
+        <template x-if="vStatus==='ok'"><span><b>Formulaire à jour</b> — schema v<span x-text="vLocal"></span></span></template>
+        <template x-if="vStatus==='update'"><span><b>Nouvelle version disponible</b> : v<span x-text="vLocal"></span> → v<span x-text="vRemote"></span><template x-if="vLog"><em x-text="' · '+vLog"></em></template></span></template>
+        <template x-if="vStatus==='error'"><span x-text="vErr"></span></template>
+      </span>
+    </div>
+  </template>
+
+  <div class="prog"><div class="prog-bar" :style="`width:${progress}%`"></div></div>
+
+  <template x-if="!schema">
+    <div class="loading-st"><span class="spin spin-lg"></span><p style="margin-top:12px">Chargement du schéma depuis le serveur…</p></div>
+  </template>
+
+  <template x-if="schema">
+    <div>
+      <template x-for="sec in schema.sections" :key="sec.id">
+        <template x-if="isSectionVisible(sec)">
+          <div class="card">
+            <div class="card-hd" @click="toggleOpen(sec.id)">
+              <span class="card-icon" x-text="sec.icon||'📋'"></span>
+              <span class="card-title" x-text="sec.title"></span>
+              <span class="card-badge" x-show="secBadge(sec)" x-text="secBadge(sec)"></span>
+              <span class="chevron" :class="{open:isOpen(sec.id)}">▶</span>
+            </div>
+            <div class="card-bd" x-show="isOpen(sec.id)" x-transition>
+
+              <!-- NON-REPEATABLE -->
+              <template x-if="!sec.repeatable">
+                <div>
+                  <template x-for="field in sec.fields" :key="field.id">
+                    <div class="field">
+
+                      <!-- text / number -->
+                      <template x-if="field.type==='text'||field.type==='number'">
+                        <div>
+                          <label class="flbl"><span x-text="field.label"></span><span class="req" x-show="field.required"> *</span></label>
+                          <input :type="field.type" :placeholder="field.placeholder||''" :min="field.min" :max="field.max"
+                                 :value="sv(field.id,field.default)"
+                                 @input="setSV(field.id,$event.target.value)">
+                        </div>
+                      </template>
+
+                      <!-- select -->
+                      <template x-if="field.type==='select'">
+                        <div>
+                          <label class="flbl"><span x-text="field.label"></span><span class="req" x-show="field.required"> *</span></label>
+                          <select style="width:100%;background:var(--bg);border:1px solid var(--brd);border-radius:var(--rs);color:var(--txt);padding:9px 12px;font-size:14px;outline:none"
+                                  :value="sv(field.id,field.default)"
+                                  @change="setSV(field.id,$event.target.value)">
+                            <template x-for="opt in field.options" :key="opt.value">
+                              <option :value="opt.value" x-text="opt.label"></option>
+                            </template>
+                          </select>
+                          <template x-if="field.help"><p class="help" x-text="field.help"></p></template>
+                        </div>
+                      </template>
+
+                      <!-- textarea -->
+                      <template x-if="field.type==='textarea'">
+                        <div>
+                          <label class="flbl"><span x-text="field.label"></span><span class="req" x-show="field.required"> *</span></label>
+                          <textarea :rows="field.rows||4" :placeholder="field.placeholder||''"
+                                    style="width:100%;background:var(--bg);border:1px solid var(--brd);border-radius:var(--rs);color:var(--txt);padding:9px 12px;font-size:14px;outline:none;resize:vertical"
+                                    :value="sv(field.id,field.default)"
+                                    @input="setSV(field.id,$event.target.value)"></textarea>
+                          <template x-if="field.help"><p class="help" x-text="field.help"></p></template>
+                        </div>
+                      </template>
+
+                      <!-- preset_or_search -->
+                      <template x-if="field.type==='preset_or_search'">
+                        <div>
+                          <label class="flbl"><span x-text="field.label"></span><span class="req" x-show="field.required"> *</span></label>
+                          <div class="preset-grid">
+                            <template x-for="preset in vocab(field.vocabulary)" :key="preset.id">
+                              <button class="pbtn" :class="{active:isPreset(sec.id,field.id,preset.id)}"
+                                      @click="selectPreset(sec.id,field.id,preset)"
+                                      x-text="(preset.emoji?preset.emoji+' ':'')+preset.display"></button>
+                            </template>
+                          </div>
+                          <template x-if="isPreset(sec.id,field.id,'__OTHER__')">
+                            <div>
+                              <div class="sw">
+                                <input type="text" :placeholder="field.placeholder||'Rechercher…'"
+                                       :value="getSQ(sec.id,0,field.id)"
+                                       @input="setSQ(sec.id,0,field.id,$event.target.value)"
+                                       @keydown.enter.prevent="doSearch(sec.id,0,field.id,field.search_api,null,null)">
+                                <button class="sbtn" :disabled="isLoading(sec.id,0,field.id)"
+                                        @click="doSearch(sec.id,0,field.id,field.search_api,null,null)">
+                                  <span x-show="!isLoading(sec.id,0,field.id)">Chercher</span>
+                                  <span x-show="isLoading(sec.id,0,field.id)"><span class="spin"></span></span>
+                                </button>
+                              </div>
+                              <template x-if="getSR(sec.id,0,field.id).length>0">
+                                <div class="rlist">
+                                  <template x-for="res in getSR(sec.id,0,field.id)" :key="res.id">
+                                    <div class="ritem" @click="selectPreset(sec.id,field.id,{...res,triggers:['gene_search']});clearRes(sec.id,0,field.id)">
+                                      <div><div class="rlbl" x-text="res.label"></div><div class="rsub" x-text="res.sublabel"></div></div>
+                                    </div>
+                                  </template>
+                                </div>
+                              </template>
+                            </div>
+                          </template>
+                          <template x-if="getSel(sec.id,0,field.id)&&!isPreset(sec.id,field.id,'__OTHER__')">
+                            <div class="s-pill">
+                              <span x-text="getSel(sec.id,0,field.id).label"></span>
+                              <span class="rsub" x-text="getSel(sec.id,0,field.id).id||''"></span>
+                              <button class="pill-x" @click="clearPreset(sec.id,field.id)">✕</button>
+                            </div>
+                          </template>
+                        </div>
+                      </template>
+
+                      <!-- checkbox_group -->
+                      <template x-if="field.type==='checkbox_group'">
+                        <div>
+                          <label class="flbl" x-text="field.label"></label>
+                          <div class="chk-grid">
+                            <template x-for="opt in field.options" :key="opt.value">
+                              <div class="chk" :class="{on:isChk(field.id,opt.value)}" @click="toggleChk(field.id,opt)">
+                                <div class="chkbox"><div class="tick"></div></div>
+                                <span class="chklbl" x-text="(opt.emoji?opt.emoji+' ':'')+opt.label"></span>
+                              </div>
+                            </template>
+                          </div>
+                        </div>
+                      </template>
+
+                      <!-- api_search (non-répétable : strain, diet, disease) -->
+                      <template x-if="field.type==='api_search'">
+                        <div>
+                          <label class="flbl" x-text="field.label"></label>
+                          <template x-if="field.help"><p class="help" x-text="field.help"></p></template>
+                          <template x-if="!getSel(sec.id,0,field.id)">
+                            <div>
+                              <div class="sw">
+                                <input type="text" :placeholder="field.placeholder||''"
+                                       :value="getSQ(sec.id,0,field.id)"
+                                       @input="setSQ(sec.id,0,field.id,$event.target.value)"
+                                       @keydown.enter.prevent="doSearch(sec.id,0,field.id,field.api,null,field)">
+                                <button class="sbtn" :disabled="isLoading(sec.id,0,field.id)"
+                                        @click="doSearch(sec.id,0,field.id,field.api,null,field)">
+                                  <span x-show="!isLoading(sec.id,0,field.id)">Chercher</span>
+                                  <span x-show="isLoading(sec.id,0,field.id)"><span class="spin"></span></span>
+                                </button>
+                              </div>
+                              <template x-if="getSR(sec.id,0,field.id).length>0">
+                                <div class="rlist">
+                                  <template x-for="res in getSR(sec.id,0,field.id)" :key="res.id||res.label">
+                                    <div class="ritem" @click="selResult(sec.id,0,field.id,res)">
+                                      <div><div class="rlbl" x-text="res.label"></div><div class="rsub" x-text="res.sublabel"></div></div>
+                                      <span class="rchk">↵</span>
+                                    </div>
+                                  </template>
+                                </div>
+                              </template>
+                              <template x-if="isNoRes(sec.id,0,field.id)">
+                                <div>
+                                  <div class="rlist"><div class="nores">Aucun résultat. Essayez un terme différent.</div></div>
+                                  <template x-if="field.allow_manual">
+                                    <button class="btn-keep" @click="keepAsIs(sec.id,0,field.id)">
+                                      📝 Conserver "<span x-text="getSQ(sec.id,0,field.id)"></span>" tel quel
+                                    </button>
+                                  </template>
+                                </div>
+                              </template>
+                            </div>
+                          </template>
+                          <template x-if="getSel(sec.id,0,field.id)">
+                            <div class="s-pill">
+                              <b x-text="getSel(sec.id,0,field.id).label"></b>
+                              <span class="rsub" x-text="getSel(sec.id,0,field.id).sublabel"></span>
+                              <span class="manual-tag" x-show="getSel(sec.id,0,field.id).scheme==='ManualInput'">· saisie libre</span>
+                              <button class="pill-x" @click="clearSel(sec.id,0,field.id)">✕</button>
+                            </div>
+                          </template>
+                        </div>
+                      </template>
+
+                    </div>
+                  </template>
+                </div>
+              </template>
+
+              <!-- REPEATABLE -->
+              <template x-if="sec.repeatable">
+                <div>
+                  <template x-for="(inst,idx) in getInst(sec.id)" :key="idx">
+                    <div class="rep-blk">
+                      <div class="rep-hd">
+                        <span class="rep-idx" x-text="(sec.repeat_label||'Entrée')+' #'+(idx+1)"></span>
+                        <button x-show="getInst(sec.id).length>1" class="rep-del" @click="delInst(sec.id,idx)">✕ Supprimer</button>
+                      </div>
+                      <template x-for="(row,ri) in buildRows(sec.fields)" :key="ri">
+                        <div :class="row.length>1?'field field-row':'field'">
+                          <template x-for="field in row" :key="field.id">
+                            <div>
+
+                              <!-- text répétable -->
+                              <template x-if="field.type==='text'||field.type==='number'">
+                                <div>
+                                  <label class="flbl"><span x-text="field.label"></span><span class="req" x-show="field.required"> *</span></label>
+                                  <input :type="field.type" :placeholder="field.placeholder||''"
+                                         :value="getInstVal(sec.id,idx,field.id)"
+                                         @input="setInstVal(sec.id,idx,field.id,$event.target.value)">
+                                </div>
+                              </template>
+
+                              <!-- ORCID (api_search avec autofill) -->
+                              <template x-if="field.type==='api_search'&&field.orcid_autofill_from">
+                                <div>
+                                  <label class="flbl" x-text="field.label"></label>
+                                  <template x-if="!getSel(sec.id,idx,field.id)">
+                                    <div>
+                                      <div class="orcid-row">
+                                        <input type="text" :placeholder="field.placeholder||''"
+                                               :value="getSQ(sec.id,idx,field.id)||orcidQ(sec.id,idx,field)"
+                                               @input="setSQ(sec.id,idx,field.id,$event.target.value)"
+                                               @keydown.enter.prevent="doSearch(sec.id,idx,field.id,field.api,getSQ(sec.id,idx,field.id)||orcidQ(sec.id,idx,field),null)">
+                                        <button class="sbtn sbtn-green" :disabled="isLoading(sec.id,idx,field.id)"
+                                                @click="doSearch(sec.id,idx,field.id,field.api,getSQ(sec.id,idx,field.id)||orcidQ(sec.id,idx,field),null)">
+                                          <span x-show="!isLoading(sec.id,idx,field.id)">🔍 Rechercher ORCID</span>
+                                          <span x-show="isLoading(sec.id,idx,field.id)"><span class="spin"></span></span>
+                                        </button>
+                                      </div>
+                                      <p class="help">Vérifiez le nom ci-dessus puis cliquez Rechercher.</p>
+                                      <template x-if="getSR(sec.id,idx,field.id).length>0">
+                                        <div class="rlist">
+                                          <template x-for="res in getSR(sec.id,idx,field.id)" :key="res.id">
+                                            <div class="ritem" @click="selResult(sec.id,idx,field.id,res)">
+                                              <div><div class="rlbl" x-text="res.label"></div><div class="rsub" x-text="res.sublabel"></div></div>
+                                              <span class="rchk">↵</span>
+                                            </div>
+                                          </template>
+                                        </div>
+                                      </template>
+                                      <template x-if="isNoRes(sec.id,idx,field.id)">
+                                        <div class="rlist"><div class="nores">Aucun profil ORCID trouvé. Laissez vide si non applicable.</div></div>
+                                      </template>
+                                    </div>
+                                  </template>
+                                  <template x-if="getSel(sec.id,idx,field.id)">
+                                    <div class="s-pill">
+                                      🟢 <b x-text="getSel(sec.id,idx,field.id).label"></b>
+                                      <span class="rsub" x-text="getSel(sec.id,idx,field.id).sublabel"></span>
+                                      <button class="pill-x" @click="clearSel(sec.id,idx,field.id)">✕ Changer</button>
+                                    </div>
+                                  </template>
+                                </div>
+                              </template>
+
+                              <!-- api_search générique répétable (ROR, mygene, chebi, uberon) -->
+                              <template x-if="field.type==='api_search'&&!field.orcid_autofill_from">
+                                <div>
+                                  <label class="flbl" x-text="field.label"></label>
+                                  <template x-if="field.help"><p class="help" x-text="field.help"></p></template>
+                                  <template x-if="!getSel(sec.id,idx,field.id)">
+                                    <div>
+                                      <div class="sw">
+                                        <input type="text" :placeholder="field.placeholder||''"
+                                               :value="getSQ(sec.id,idx,field.id)"
+                                               @input="setSQ(sec.id,idx,field.id,$event.target.value)"
+                                               @keydown.enter.prevent="doSearch(sec.id,idx,field.id,field.api,null,field)">
+                                        <button class="sbtn" :disabled="isLoading(sec.id,idx,field.id)"
+                                                @click="doSearch(sec.id,idx,field.id,field.api,null,field)">
+                                          <span x-show="!isLoading(sec.id,idx,field.id)">Chercher</span>
+                                          <span x-show="isLoading(sec.id,idx,field.id)"><span class="spin"></span></span>
+                                        </button>
+                                      </div>
+                                      <template x-if="getSR(sec.id,idx,field.id).length>0">
+                                        <div class="rlist">
+                                          <template x-for="res in getSR(sec.id,idx,field.id)" :key="res.id||res.label">
+                                            <div class="ritem" @click="selResult(sec.id,idx,field.id,res)">
+                                              <div><div class="rlbl" x-text="res.label"></div><div class="rsub" x-text="res.sublabel"></div></div>
+                                              <span class="rchk">↵</span>
+                                            </div>
+                                          </template>
+                                        </div>
+                                      </template>
+                                      <template x-if="isNoRes(sec.id,idx,field.id)">
+                                        <div>
+                                          <div class="rlist"><div class="nores">Aucun résultat. Essayez un terme différent.</div></div>
+                                          <template x-if="field.allow_manual">
+                                            <button class="btn-keep" @click="keepAsIs(sec.id,idx,field.id)">
+                                              📝 Conserver "<span x-text="getSQ(sec.id,idx,field.id)"></span>" tel quel
+                                            </button>
+                                          </template>
+                                        </div>
+                                      </template>
+                                    </div>
+                                  </template>
+                                  <template x-if="getSel(sec.id,idx,field.id)">
+                                    <div>
+                                      <div class="s-pill">
+                                        <b x-text="getSel(sec.id,idx,field.id).label"></b>
+                                        <span class="rsub" x-text="getSel(sec.id,idx,field.id).sublabel"></span>
+                                        <span class="manual-tag" x-show="getSel(sec.id,idx,field.id).scheme==='ManualInput'">· saisie libre</span>
+                                        <button class="pill-x" @click="clearSel(sec.id,idx,field.id)">✕</button>
+                                      </div>
+                                      <template x-if="field.show_xrefs&&getSel(sec.id,idx,field.id).xrefs&&Object.keys(getSel(sec.id,idx,field.id).xrefs).length>0">
+                                        <div class="xw">
+                                          <div class="xt">🔗 Identifiants croisés</div>
+                                          <div class="xg">
+                                            <template x-for="[db,xref] in Object.entries(getSel(sec.id,idx,field.id).xrefs)" :key="db">
+                                              <div class="xb"><span class="xdb" x-text="xref.label"></span><a class="xid" :href="xref.uri" target="_blank" x-text="xref.id"></a></div>
+                                            </template>
+                                          </div>
+                                        </div>
+                                      </template>
+                                    </div>
+                                  </template>
+                                </div>
+                              </template>
+
+                              <!-- multi_select (CRediT) -->
+                              <template x-if="field.type==='multi_select'">
+                                <div>
+                                  <label class="flbl" x-text="field.label"></label>
+                                  <template x-if="field.help"><p class="help" x-text="field.help"></p></template>
+                                  <div class="tags">
+                                    <template x-for="item in vocab(field.vocabulary)" :key="item.id">
+                                      <button class="tag" :class="isMS(sec.id,idx,field.id,item.id)?'on':'off'"
+                                              @click="toggleMS(sec.id,idx,field.id,item)" x-text="item.label"></button>
+                                    </template>
+                                  </div>
+                                </div>
+                              </template>
+
+                            </div>
+                          </template>
+                        </div>
+                      </template>
+                    </div>
+                  </template>
+                  <button class="btn-add" @click="addInst(sec.id)" x-text="sec.add_label||'+ Ajouter'"></button>
+                </div>
+              </template>
+
+            </div>
+          </div>
+        </template>
+      </template>
+
+      <div class="sub-wrap">
+        <button class="btn-sub" @click="submit()">🚀 Générer les métadonnées DataCite</button>
+      </div>
+
+      <template x-if="jsonOut">
+        <div class="json-wrap">
+          <div class="json-hd">
+            <span class="json-t">📋 Payload JSON — DataCite Metadata Schema 4.x</span>
+            <button class="btn-copy" @click="copyJson()">📋 Copier</button>
+          </div>
+          <div class="json-pre" x-text="jsonOut"></div>
+        </div>
+      </template>
+
+    </div>
+  </template>
+</div>
+
+<script>
+const API_BASE='http://localhost:8000';
+function wizard(){return{
+schema:null,vStatus:'idle',vLocal:'',vRemote:'',vLog:'',vErr:'',
+openSecs:{},instMap:{},svals:{},sq:{},sr:{},sl:{},ns:{},ss:{},ms:{},jsonOut:null,
+
+async init(){
+  try{
+    const r=await fetch(`${API_BASE}/api/schema`);
+    this.schema=await r.json();
+    this.vLocal=this.schema.version||'?';
+    for(const sec of this.schema.sections){
+      this.openSecs={...this.openSecs,[sec.id]:sec.open_default??true};
+      if(sec.repeatable)this.instMap={...this.instMap,[sec.id]:[{}]};
+      for(const f of sec.fields||[])
+        if(f.default!==undefined)this.svals={...this.svals,[f.id]:f.default};
+    }
+  }catch(e){console.error('Schema:',e);}
+  this.checkVersion();
+},
+
+async checkVersion(){
+  this.vStatus='checking';
+  try{
+    const r=await fetch(`${API_BASE}/api/schema/check-update`);
+    const d=await r.json();
+    this.vLocal=d.local_version||this.vLocal;this.vRemote=d.remote_version||'';
+    if(d.error&&!d.remote_version){this.vStatus='error';this.vErr=d.error;return;}
+    if(d.up_to_date){this.vStatus='ok';}
+    else{this.vStatus='update';this.vLog=d.changelog||'';}
+  }catch{this.vStatus='error';this.vErr='Serveur inaccessible.';}
+},
+
+get progress(){
+  if(!this.schema)return 0;
+  const vis=this.schema.sections.filter(s=>this.isSectionVisible(s));
+  return vis.length?Math.round(vis.filter(s=>this.isSecFilled(s)).length/vis.length*100):0;
+},
+
+isSecFilled(sec){
+  if(sec.repeatable)return(this.instMap[sec.id]||[]).some((_,i)=>(sec.fields||[]).some(f=>{const k=this._k(sec.id,i,f.id);return(this.ss[k]||null)||(this.ms[k]||[]).length>0;}));
+  return(sec.fields||[]).some(f=>{
+    if(f.type==='checkbox_group')return(this.svals[f.id]||[]).length>0;
+    if(f.type==='preset_or_search'||f.type==='api_search')return!!this.ss[this._k(sec.id,0,f.id)];
+    const v=this.svals[f.id];return v!==undefined&&v!==''&&v!==null;
+  });
+},
+
+isSectionVisible(sec){
+  if(!sec.condition)return true;
+  const{type,field_id,value,trigger}=sec.condition;
+  if(type==='checkbox_includes')return(this.svals[field_id]||[]).includes(value);
+  if(type==='organism_trigger'){
+    const orgSel=Object.entries(this.ss).find(([k])=>k.startsWith('organism__0__'));
+    if(!orgSel)return false;
+    const preset=(this.schema.vocabularies?.organism_presets?.items||[]).find(p=>p.id===orgSel[1]?.id);
+    return preset?.triggers?.includes(trigger)||false;
+  }
+  return true;
+},
+
+isOpen(id){return!!this.openSecs[id];},
+toggleOpen(id){this.openSecs={...this.openSecs,[id]:!this.openSecs[id]};},
+
+secBadge(sec){
+  if(sec.repeatable){const n=(this.instMap[sec.id]||[]).length;return n>0?`${n} entrée${n>1?'s':''}`:''}
+  for(const f of sec.fields||[]){
+    const sel=this.ss[this._k(sec.id,0,f.id)];
+    if(sel?.label)return sel.label.slice(0,28)+(sel.label.length>28?'…':'');
+    const v=this.svals[f.id];if(v&&v!==f.default)return String(v).slice(0,28);
+  }return'';
+},
+
+vocab(name){return this.schema?.vocabularies?.[name]?.items||[];},
+sv(id,def){return this.svals[id]??(def??'');},
+setSV(id,val){this.svals={...this.svals,[id]:val};},
+
+getInst(sid){return this.instMap[sid]||[{}];},
+addInst(sid){this.instMap={...this.instMap,[sid]:[...(this.instMap[sid]||[]),{}]};},
+delInst(sid,idx){const a=[...(this.instMap[sid]||[])];a.splice(idx,1);this.instMap={...this.instMap,[sid]:a};},
+getInstVal(sid,i,fid){return(this.instMap[sid]?.[i]||{})[fid]||'';},
+setInstVal(sid,i,fid,val){const arr=[...(this.instMap[sid]||[])];arr[i]={...arr[i],[fid]:val};this.instMap={...this.instMap,[sid]:arr};},
+
+buildRows(fields){
+  const rows=[];let i=0;
+  while(i<fields.length){const f=fields[i];
+    if(f.row==='half'&&i+1<fields.length&&fields[i+1].row==='half'){rows.push([f,fields[i+1]]);i+=2;}
+    else{rows.push([f]);i++;}
+  }return rows;
+},
+
+_k(s,i,f){return`${s}__${i}__${f}`;},
+getSQ(s,i,f){return this.sq[this._k(s,i,f)]||'';},
+setSQ(s,i,f,v){this.sq={...this.sq,[this._k(s,i,f)]:v};},
+getSR(s,i,f){return this.sr[this._k(s,i,f)]||[];},
+isLoading(s,i,f){return!!this.sl[this._k(s,i,f)];},
+isNoRes(s,i,f){return!!this.ns[this._k(s,i,f)];},
+getSel(s,i,f){return this.ss[this._k(s,i,f)]||null;},
+clearSel(s,i,f){const o={...this.ss};delete o[this._k(s,i,f)];this.ss=o;},
+clearRes(s,i,f){this.sr={...this.sr,[this._k(s,i,f)]:[]};this.ns={...this.ns,[this._k(s,i,f)]:false};},
+selResult(s,i,f,res){this.ss={...this.ss,[this._k(s,i,f)]:res};this.clearRes(s,i,f);},
+getMS(s,i,f){return this.ms[this._k(s,i,f)]||[];},
+isMS(s,i,f,id){return this.getMS(s,i,f).some(x=>x.id===id);},
+toggleMS(s,i,f,item){const k=this._k(s,i,f),p=this.getMS(s,i,f),idx=p.findIndex(x=>x.id===item.id);this.ms={...this.ms,[k]:idx>=0?p.filter((_,j)=>j!==idx):[...p,item]};},
+
+keepAsIs(s,i,f){
+  const q=(this.sq[this._k(s,i,f)]||'').trim();if(!q)return;
+  this.ss={...this.ss,[this._k(s,i,f)]:{label:q,sublabel:'',id:null,scheme:'ManualInput',xrefs:{}}};
+  this.sr={...this.sr,[this._k(s,i,f)]:[]};this.ns={...this.ns,[this._k(s,i,f)]:false};
+},
+
+isChk(fid,val){return(this.svals[fid]||[]).includes(val);},
+toggleChk(fid,opt){
+  const prev=this.svals[fid]||[];
+  const next=prev.includes(opt.value)?prev.filter(v=>v!==opt.value):[...prev,opt.value];
+  this.svals={...this.svals,[fid]:next};
+  if(opt.opens_section&&!prev.includes(opt.value))this.openSecs={...this.openSecs,[opt.opens_section]:true};
+},
+
+isPreset(sid,fid,presetId){return this.ss[this._k(sid,0,fid)]?.id===presetId;},
+selectPreset(sid,fid,preset){
+  this.ss={...this.ss,[this._k(sid,0,fid)]:preset};
+  if(preset.triggers?.includes('strain_search'))this.openSecs={...this.openSecs,strain:true};
+},
+clearPreset(sid,fid){const o={...this.ss};delete o[this._k(sid,0,fid)];this.ss=o;},
+
+orcidQ(secId,idx,field){return(field.orcid_autofill_from||[]).map(fid=>this.getInstVal(secId,idx,fid)||'').join(' ').trim();},
+
+async doSearch(sec,idx,fld,apiKey,customQ,field){
+  const k=this._k(sec,idx,fld);
+  const q=(customQ!==undefined&&customQ!==null?customQ:this.sq[k]||'').trim();
+  if(!q)return;
+  this.sl={...this.sl,[k]:true};this.sr={...this.sr,[k]:[]};this.ns={...this.ns,[k]:false};
+  try{
+    let url=`${API_BASE}/api/search/${apiKey}?q=${encodeURIComponent(q)}`;
+    if(field?.use_organism_taxon){
+      const orgSel=Object.values(this.ss).find(v=>v?.taxon_id);
+      if(orgSel?.taxon_id)url+=`&species=${orgSel.taxon_id}`;
+    }
+    const r=await fetch(url);const d=await r.json();
+    const res=d.results||[];
+    this.sr={...this.sr,[k]:res};this.ns={...this.ns,[k]:res.length===0};
+  }catch(e){console.error(e);this.ns={...this.ns,[k]:true};}
+  finally{this.sl={...this.sl,[k]:false};}
+},
+
+submit(){this.jsonOut=JSON.stringify(this.buildPayload(),null,2);setTimeout(()=>document.querySelector('.json-pre')?.scrollIntoView({behavior:'smooth'}),80);},
+
+buildPayload(){
+  const out={
+    titles:[], creators:[], contributors:[], subjects:[], descriptions:[], types:[],
+    publicationYear:parseInt(this.svals.publication_year)||new Date().getFullYear(),
+    publisher:this.schema.meta?.publisher_default||'BioPortal'
+  };
+
+  // Collecte des créateurs avec leurs infos pour générer contributors CRediT
+  const creatorsData = [];
+
+  for(const sec of this.schema.sections){
+    if(!this.isSectionVisible(sec))continue;
+
+    if(sec.repeatable){
+      const insts=this.getInst(sec.id);
+      for(let i=0;i<insts.length;i++){
+        const obj={};
+        for(const f of sec.fields||[]){
+          const v=this._resolveField(sec,f,i);
+          if(v===null)continue;
+          if(f.output?.obj_key)obj[f.output.obj_key]=v;
+          else if(f.output?.path)this._append(out,f.output,v);
+        }
+        if(Object.keys(obj).length){
+          if(obj.givenName||obj.familyName){
+            obj.name=`${obj.familyName||''}, ${obj.givenName||''}`.replace(/^,\s*|,\s*$/g,'');
+            obj.nameType='Personal';
+          }
+          if(sec.id==='creators')creatorsData.push(obj);
+          if(sec.output?.path)out[sec.output.path].push(obj);
+        }
+      }
+    }else{
+      for(const f of sec.fields||[]){
+        const v=this._resolveField(sec,f,0);
+        if(v===null)continue;
+        if(f.output?.path)this._append(out,f.output,v);
+      }
+    }
+  }
+
+  // CRediT roles → contributors (lier aux creators)
+  for(let i=0;i<creatorsData.length;i++){
+    const roles=this.getMS('creators',i,'contributor_roles');
+    if(roles.length>0){
+      const creator=creatorsData[i];
+      for(const role of roles){
+        out.contributors.push({
+          name: creator.name,
+          nameType: 'Personal',
+          givenName: creator.givenName,
+          familyName: creator.familyName,
+          nameIdentifiers: creator.nameIdentifiers||[],
+          contributorType: 'Other',
+          contributorRoles: [{
+            contributorRole: role.label,
+            contributorRoleURI: role.id,
+            contributorRoleScheme: 'CRediT',
+            contributorRoleSchemeURI: 'https://credit.niso.org/'
+          }]
+        });
+      }
+    }
+  }
+
+  // Générer description technique riche depuis tous les sujets biologiques
+  const bioDesc = this._buildBiologicalDescription(out);
+  if(bioDesc.trim()){
+    out.descriptions.push({
+      description: bioDesc,
+      descriptionType: 'TechnicalInfo',
+      lang: 'fr'
+    });
+  }
+
+  return out;
+},
+
+_buildBiologicalDescription(out){
+  const parts=[];
+  const subjs=out.subjects||[];
+
+  // Organisme
+  const org=subjs.find(s=>s.subjectScheme==='NCBITaxon'&&!s.subject.startsWith('Strain:')&&!s.subject.startsWith('Gene:'));
+  if(org)parts.push(`**Organisme modèle** : ${org.subject} (${org.valueURI||''})`);
+
+  // Souche
+  const strain=subjs.find(s=>s.subject.startsWith('Strain:'));
+  if(strain)parts.push(`**Souche** : ${strain.subject.replace('Strain: ','')}`);
+
+  // Gènes avec xrefs
+  const genes=subjs.filter(s=>s.subject.startsWith('Gene:'));
+  if(genes.length>0){
+    const geneLines=genes.map(g=>{
+      let line=`- ${g.subject.replace('Gene: ','')}`;
+      if(g.subjectDescription)line+=` (${g.subjectDescription})`;
+      if(g.identifiers&&g.identifiers.length>0){
+        const ids=g.identifiers.map(x=>`${x.identifierScheme}:${x.identifier}`).join(', ');
+        line+=` — Identifiants : ${ids}`;
+      }
+      return line;
+    });
+    parts.push(`**Gènes impliqués** :\n${geneLines.join('\n')}`);
+  }
+
+  // Molécules
+  const chems=subjs.filter(s=>s.subjectScheme==='ChEBI'||s.subjectScheme==='ManualInput'&&!s.subject.includes(':'));
+  if(chems.length>0){
+    parts.push(`**Traitements chimiques** : ${chems.map(c=>c.subject).join(', ')}`);
+  }
+
+  // Régime
+  const diet=subjs.find(s=>s.subjectScheme==='EFO'&&(s.subject.toLowerCase().includes('diet')||s.subject.toLowerCase().includes('caloric')));
+  if(diet)parts.push(`**Régime alimentaire** : ${diet.subject}`);
+
+  // Maladie
+  const dis=subjs.find(s=>s.subjectScheme==='DOID');
+  if(dis)parts.push(`**Modèle de maladie** : ${dis.subject}`);
+
+  // Anatomie
+  const anats=subjs.filter(s=>s.subjectScheme==='UBERON');
+  if(anats.length>0){
+    parts.push(`**Tissus/organes étudiés** : ${anats.map(a=>a.subject).join(', ')}`);
+  }
+
+  return parts.join('\n\n');
+},
+
+_resolveField(sec,field,idx){
+  const o=field.output;if(!o)return null;
+  if(field.type==='text'||field.type==='number'||field.type==='select'||field.type==='textarea'){
+    const raw=sec.repeatable?this.getInstVal(sec.id,idx,field.id):(this.svals[field.id]??field.default??'');
+    if(raw===''||raw===null||raw===undefined)return null;
+    if(o.mode==='set_int')return parseInt(raw)||raw;
+    return o.tpl?this._tpl(o.tpl,{'\$value':String(raw)}):raw;
+  }
+  if(field.type==='api_search'||field.type==='preset_or_search'){
+    const sel=this.getSel(sec.id,idx,field.id);if(!sel?.label||sel.id==='__OTHER__')return null;
+    if(o.obj_key&&o.mode==='wrap_array'&&o.map){const m=this._tpl(o.map,{'\$id':sel.id||'','\$label':sel.label});return m?[m]:null;}
+    const scheme=sel.scheme==='ManualInput'?'ManualInput':(sel.scheme||field.api?.replace('ols_','').toUpperCase()||'Custom');
+    const v=this._tpl(o.tpl,{'\$label':sel.label,'\$id':sel.id||'','\$scheme':scheme});
+    if(field.show_xrefs&&sel.xrefs&&Object.keys(sel.xrefs).length>0&&v){v.subjectDescription=sel.sublabel||'';v.identifiers=Object.entries(sel.xrefs).map(([,x])=>({identifierScheme:x.label,identifier:x.id,identifierURI:x.uri}));}
+    return v;
+  }
+  if(field.type==='multi_select'){
+    const items=this.getMS(sec.id,idx,field.id);if(!items.length)return null;
+    if(o.mode==='map_array'&&o.map)return items.map(item=>this._tpl(o.map,{'\$label':item.label,'\$id':item.id})).filter(Boolean);
+    // CRediT roles sont gérés dans buildPayload
+    return null;
+  }
+  return null;
+},
+
+_tpl(tmpl,vars){
+  if(typeof tmpl==='string'){let s=tmpl;for(const[k,v]of Object.entries(vars))s=s.replaceAll(k,v??'');return s||null;}
+  if(tmpl&&typeof tmpl==='object'){const out={};for(const[k,v]of Object.entries(tmpl)){const r=this._tpl(v,vars);if(r!==null&&r!==undefined&&r!=='')out[k]=r;}return Object.keys(out).length?out:null;}
+  return tmpl;
+},
+
+_append(out,outDef,value){
+  const path=outDef.path;if(!path)return;
+  if(outDef.mode==='set_int'||outDef.mode==='set'){out[path]=value;return;}
+  if(outDef.mode==='append_if'&&!value)return;
+  if(!out[path])out[path]=[];
+  if(Array.isArray(value))value.forEach(v=>out[path].push(v));else out[path].push(value);
+},
+
+copyJson(){navigator.clipboard?.writeText(this.jsonOut).catch(()=>{});},
+};}
+</script>
+</body>
+</html>
