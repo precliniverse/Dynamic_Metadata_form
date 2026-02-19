@@ -346,3 +346,35 @@ class TestSearchEndpointMocked:
         assert "ensembl" in result["xrefs"]
         # Verify species was forwarded
         assert "species=10090" in str(route.calls[0].request.url)
+
+    @respx.mock
+    def test_impc_search(self, client):
+        """Mock IMPC Solr response (pipeline core) and verify mapping."""
+        mock_response = {
+            "response": {
+                "docs": [
+                    {
+                        "procedure_name": "Urinalysis",
+                        "parameter_name": "Urine dilution",
+                        "pipeline_name": "JAX Pipeline",
+                        "parameter_id": 6854,
+                        "parameter_stable_id": "JAX_URI_016_001"
+                    }
+                ]
+            }
+        }
+        respx.get("https://www.ebi.ac.uk/mi/impc/solr/pipeline/select").mock(
+            return_value=httpx.Response(200, json=mock_response)
+        )
+        # Search for "Urinalysis"
+        r = client.get("/api/search/impc?q=Urinalysis")
+        assert r.status_code == 200
+        data = r.json()
+        assert len(data["results"]) == 1
+        result = data["results"][0]
+        
+        # Verify mapper strategy (pipeline core)
+        assert result["label"] == "Urinalysis - Urine dilution"
+        assert result["sublabel"] == "JAX Pipeline"
+        assert result["id"] == "https://www.mousephenotype.org/impress/ParameterInfo?parameterId=6854"
+        assert result["scheme"] == "IMPReSS"

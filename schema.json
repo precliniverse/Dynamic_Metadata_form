@@ -174,6 +174,25 @@
           }
         }
       }
+    },
+    "impc": {
+      "label": "IMPC (IMPReSS)",
+      "url": "https://www.ebi.ac.uk/mi/impc/solr/pipeline/select",
+      "query_param": "q",
+      "extra_params": {
+        "wt": "json",
+        "defType": "edismax",
+        "qf": "procedure_name^10 parameter_name^5",
+        "rows": 10
+      },
+      "result_path": "response.docs",
+      "mapper": {
+        "strategy": "flat_object",
+        "label": "{{procedure_name}} - {{parameter_name}}",
+        "sublabel": "{{pipeline_name}}",
+        "id": "https://www.mousephenotype.org/impress/ParameterInfo?parameterId={{parameter_id}}",
+        "scheme": "IMPReSS"
+      }
     }
   },
   "vocabularies": {
@@ -1229,6 +1248,32 @@
               "description": "Timepoints: $value",
               "descriptionType": "TechnicalInfo"
             }
+          }
+        }
+      ]
+    },
+    {
+      "id": "phenotyping",
+      "title": "Phenotypage (IMPC)",
+      "icon": "🐁",
+      "open_default": false,
+      "fields": [
+        {
+          "id": "impc_search",
+          "label": "Paramètre IMPC",
+          "type": "api_search",
+          "api": "impc",
+          "allow_manual": true,
+          "placeholder": "Ex : Glucose, Body Weight, Grip Strength...",
+          "output": {
+            "path": "subjects",
+            "mode": "append",
+            "tpl": {
+              "subject": "IMPC: $label",
+              "subjectScheme": "$scheme",
+              "valueURI": "$id"
+            },
+            "also_description": true
           }
         }
       ]
