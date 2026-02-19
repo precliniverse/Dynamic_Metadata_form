@@ -17,7 +17,7 @@ import re
 import logging
 from pathlib import Path
 from typing import Any, Optional
-from functools import lru_cache
+
 
 import httpx
 from fastapi import FastAPI, Query
@@ -285,7 +285,7 @@ def normalize_mgi_mapper(hit: dict, config: dict) -> dict:
 # ══════════════════════════════════════════════════════════════════════
 # SCHEMA LOADER
 # ══════════════════════════════════════════════════════════════════════
-@lru_cache(maxsize=1)
+
 def load_schema() -> dict:
     """Charge schema.json (avec cache)."""
     try:

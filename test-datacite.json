@@ -1,0 +1,128 @@
+{
+  "titles": [
+    {
+      "title": "Test Principal"
+    },
+    {
+      "title": "sous test",
+      "titleType": "AlternativeTitle"
+    }
+  ],
+  "creators": [
+    {
+      "givenName": "Damien",
+      "familyName": "Huzard",
+      "nameIdentifiers": [
+        {
+          "nameIdentifier": "https://orcid.org/0000-0003-4820-7951",
+          "nameIdentifierScheme": "ORCID",
+          "schemeURI": "https://orcid.org/"
+        }
+      ],
+      "affiliation": [
+        {
+          "affiliation": "Institut de Génomique Fonctionnelle",
+          "affiliationIdentifier": "https://ror.org/043wmc583",
+          "affiliationIdentifierScheme": "ROR",
+          "schemeURI": "https://ror.org/"
+        }
+      ],
+      "name": "Huzard, Damien",
+      "nameType": "Personal"
+    }
+  ],
+  "contributors": [
+    {
+      "name": "Huzard, Damien",
+      "nameType": "Personal",
+      "givenName": "Damien",
+      "familyName": "Huzard",
+      "nameIdentifiers": [
+        {
+          "nameIdentifier": "https://orcid.org/0000-0003-4820-7951",
+          "nameIdentifierScheme": "ORCID",
+          "schemeURI": "https://orcid.org/"
+        }
+      ],
+      "contributorType": "Other",
+      "contributorRoles": [
+        {
+          "contributorRole": "Conceptualization",
+          "contributorRoleURI": "https://credit.niso.org/contributor-roles/conceptualization/",
+          "contributorRoleScheme": "CRediT",
+          "contributorRoleSchemeURI": "https://credit.niso.org/"
+        }
+      ]
+    }
+  ],
+  "subjects": [
+    {
+      "subject": "Mus musculus",
+      "subjectScheme": "NCBITaxon",
+      "valueURI": "http://purl.obolibrary.org/obo/NCBITaxon_10090",
+      "schemeURI": "http://purl.obolibrary.org/obo/"
+    },
+    {
+      "subject": "Strain: C57BL/6",
+      "subjectScheme": "EFO",
+      "valueURI": "http://www.ebi.ac.uk/efo/EFO_0022397"
+    },
+    {
+      "subject": "Gene: Shank3",
+      "subjectScheme": "GeneID",
+      "valueURI": "https://identifiers.org/ncbigene:58234",
+      "subjectDescription": "SH3 and multiple ankyrin repeat domains 3",
+      "identifiers": [
+        {
+          "identifierScheme": "NCBI Gene",
+          "identifier": "58234",
+          "identifierURI": "https://identifiers.org/ncbigene:58234"
+        },
+        {
+          "identifierScheme": "MGI",
+          "identifier": "MGI:1930016",
+          "identifierURI": "https://identifiers.org/mgi:MGI:1930016"
+        },
+        {
+          "identifierScheme": "Ensembl",
+          "identifier": "ENSMUSG00000022623",
+          "identifierURI": "https://identifiers.org/ensembl:ENSMUSG00000022623"
+        }
+      ]
+    },
+    {
+      "subject": "methylphenidate hydrochloride",
+      "subjectScheme": "ChEBI",
+      "valueURI": "http://purl.obolibrary.org/obo/CHEBI_31836"
+    },
+    {
+      "subject": "omega-3 polyunsaturated fatty acid measurement",
+      "subjectScheme": "EFO",
+      "valueURI": "http://www.ebi.ac.uk/efo/EFO_0010119"
+    },
+    {
+      "subject": "brain",
+      "subjectScheme": "UBERON",
+      "valueURI": "http://purl.obolibrary.org/obo/UBERON_0000955"
+    }
+  ],
+  "descriptions": [
+    {
+      "description": "Test1",
+      "descriptionType": "Abstract"
+    },
+    {
+      "description": "**Organisme modèle** : Mus musculus (http://purl.obolibrary.org/obo/NCBITaxon_10090)\n\n**Souche** : C57BL/6\n\n**Gènes impliqués** :\n- Shank3 (SH3 and multiple ankyrin repeat domains 3) — Identifiants : NCBI Gene:58234, MGI:MGI:1930016, Ensembl:ENSMUSG00000022623\n\n**Traitements chimiques** : methylphenidate hydrochloride\n\n**Tissus/organes étudiés** : brain",
+      "descriptionType": "TechnicalInfo",
+      "lang": "fr"
+    }
+  ],
+  "types": [
+    {
+      "resourceType": "Workflow",
+      "resourceTypeGeneral": "Workflow"
+    }
+  ],
+  "publicationYear": 2026,
+  "publisher": "FAIR3R"
+}

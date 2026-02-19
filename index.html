@@ -804,6 +804,160 @@
       background: var(--sur2);
       transform: scale(1.1);
     }
+
+    /* ── Draft toolbar ── */
+    .draft-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .draft-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--sur2);
+      border: 1px solid var(--brd);
+      color: var(--mute);
+      border-radius: var(--rs);
+      padding: 5px 13px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .18s;
+    }
+
+    .draft-btn:hover {
+      color: var(--txt);
+      border-color: var(--acc);
+    }
+
+    .draft-btn.primary {
+      background: var(--acc-bg);
+      border-color: var(--acc-brd);
+      color: var(--acc2);
+    }
+
+    .draft-btn.danger {
+      background: var(--err-bg);
+      border-color: var(--err-brd);
+      color: var(--err);
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--ok);
+      color: #fff;
+      border-radius: var(--rs);
+      padding: 10px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, .2);
+      z-index: 999;
+      transition: opacity .4s;
+    }
+
+    /* ── Validation errors ── */
+    .val-banner {
+      background: var(--err-bg);
+      border: 1px solid var(--err-brd);
+      border-radius: var(--r);
+      padding: 14px 18px;
+      margin-bottom: 16px;
+      color: var(--err);
+      font-size: 13px;
+    }
+
+    .val-banner ul {
+      margin: 6px 0 0 18px;
+    }
+
+    .val-banner li {
+      margin-bottom: 3px;
+    }
+
+    .field-err input,
+    .field-err select,
+    .field-err textarea {
+      border-color: var(--err) !important;
+      box-shadow: 0 0 0 3px var(--err-bg) !important;
+    }
+
+    /* ── Export modal ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .modal-box {
+      background: var(--sur);
+      border: 1px solid var(--brd);
+      border-radius: var(--r);
+      padding: 28px 32px;
+      width: 420px;
+      max-width: 95vw;
+      box-shadow: 0 12px 48px rgba(0, 0, 0, .25);
+    }
+
+    .modal-box h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .modal-box input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--brd);
+      border-radius: var(--rs);
+      color: var(--txt);
+      padding: 9px 12px;
+      font-size: 14px;
+      outline: none;
+      margin-bottom: 16px;
+    }
+
+    .modal-box input:focus {
+      border-color: var(--acc);
+      box-shadow: 0 0 0 3px var(--acc-bg);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .btn-cancel {
+      background: var(--sur2);
+      border: 1px solid var(--brd);
+      color: var(--mute);
+      border-radius: var(--rs);
+      padding: 8px 18px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .btn-dl {
+      background: linear-gradient(135deg, var(--acc), var(--acc2));
+      color: #fff;
+      border: none;
+      border-radius: var(--rs);
+      padding: 8px 22px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
   </style>
 </head>
 
@@ -813,11 +967,44 @@
     <span x-show="theme === 'dark'">🌞</span>
   </button>
 
+  <!-- Export modal -->
+  <template x-if="exportModal">
+    <div class="modal-overlay" @click.self="exportModal=false">
+      <div class="modal-box">
+        <h3>💾 Exporter le JSON DataCite</h3>
+        <label class="flbl">Nom du fichier</label>
+        <input type="text" x-model="exportFilename" @keydown.enter="doExport()" @keydown.escape="exportModal=false">
+        <div class="modal-actions">
+          <button class="btn-cancel" @click="exportModal=false">Annuler</button>
+          <button class="btn-dl" @click="doExport()">⬇️ Télécharger</button>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- Toast -->
+  <template x-if="toastMsg">
+    <div class="toast" x-text="toastMsg"></div>
+  </template>
+
   <div class="hdr">
     <div class="badge-pill">🔬 Open Science Metadata Wizard</div>
     <h1 x-text="schema ? schema.meta.title : 'Chargement…'"></h1>
     <p>Formulaire piloté par <code>schema.json</code> — synchronisé depuis GitHub à chaque chargement</p>
   </div>
+
+  <!-- Draft toolbar -->
+  <template x-if="schema">
+    <div class="draft-bar">
+      <button class="draft-btn primary" @click="saveDraft()">💾 Sauvegarder le brouillon</button>
+      <template x-if="draftExists">
+        <button class="draft-btn" @click="loadDraft()">📂 Reprendre le brouillon</button>
+      </template>
+      <template x-if="draftExists">
+        <button class="draft-btn danger" @click="clearDraft()">🗑️ Effacer le brouillon</button>
+      </template>
+    </div>
+  </template>
 
   <template x-if="vStatus !== 'idle'">
     <div class="vbanner" :class="'vb-'+vStatus">
@@ -865,7 +1052,7 @@
 
                       <!-- text / number -->
                       <template x-if="field.type==='text'||field.type==='number'">
-                        <div>
+                        <div :class="{'field-err': isFieldErr(sec.id, field.id)}">
                           <label class="flbl"><span x-text="field.label"></span><span class="req"
                               x-show="field.required"> *</span></label>
                           <input :type="field.type" :placeholder="field.placeholder||''" :min="field.min"
@@ -874,16 +1061,26 @@
                         </div>
                       </template>
 
-                      <!-- select -->
+                      <!-- select (standard options OR vocabulary-backed) -->
                       <template x-if="field.type==='select'">
                         <div>
                           <label class="flbl"><span x-text="field.label"></span><span class="req"
                               x-show="field.required"> *</span></label>
                           <select
                             style="width:100%;background:var(--bg);border:1px solid var(--brd);border-radius:var(--rs);color:var(--txt);padding:9px 12px;font-size:14px;outline:none"
-                            :value="sv(field.id,field.default)" @change="setSV(field.id,$event.target.value)">
-                            <template x-for="opt in field.options" :key="opt.value">
-                              <option :value="opt.value" x-text="opt.label"></option>
+                            :class="{'field-err': isFieldErr(sec.id, field.id)}" :value="sv(field.id,field.default)"
+                            @change="setSV(field.id,$event.target.value)">
+                            <!-- vocabulary-backed options (e.g. SPDX licenses) -->
+                            <template x-if="field.use_vocabulary_as_options">
+                              <template x-for="opt in vocab(field.vocabulary)" :key="opt.value">
+                                <option :value="opt.value" x-text="opt.label"></option>
+                              </template>
+                            </template>
+                            <!-- standard inline options -->
+                            <template x-if="!field.use_vocabulary_as_options">
+                              <template x-for="opt in field.options" :key="opt.value">
+                                <option :value="opt.value" x-text="opt.label"></option>
+                              </template>
                             </template>
                           </select>
                           <template x-if="field.help">
@@ -1223,6 +1420,18 @@
         </template>
       </template>
 
+      <!-- Validation error banner -->
+      <template x-if="validationErrors.length > 0">
+        <div class="val-banner">
+          <strong>⚠️ Champs obligatoires manquants :</strong>
+          <ul>
+            <template x-for="e in validationErrors" :key="e.field">
+              <li x-text="e.section + ' → ' + e.label"></li>
+            </template>
+          </ul>
+        </div>
+      </template>
+
       <div class="sub-wrap">
         <button class="btn-sub" @click="submit()">🚀 Générer les métadonnées DataCite</button>
       </div>
@@ -1231,7 +1440,10 @@
         <div class="json-wrap">
           <div class="json-hd">
             <span class="json-t">📋 Payload JSON — DataCite Metadata Schema 4.x</span>
-            <button class="btn-copy" @click="copyJson()">📋 Copier</button>
+            <div style="display:flex;gap:8px">
+              <button class="btn-copy" @click="copyJson()">📋 Copier</button>
+              <button class="btn-copy" @click="openExport()">💾 Exporter JSON</button>
+            </div>
           </div>
           <div class="json-pre" x-text="jsonOut"></div>
         </div>
@@ -1243,11 +1455,17 @@
 
   <script>
     const API_BASE = 'http://localhost:8000';
+    const DRAFT_KEY = 'dmf_draft_v1';
     function wizard() {
       return {
         schema: null, vStatus: 'idle', vLocal: '', vRemote: '', vLog: '', vErr: '',
         openSecs: {}, instMap: {}, svals: {}, sq: {}, sr: {}, sl: {}, ns: {}, ss: {}, ms: {}, jsonOut: null,
         theme: 'light',
+        validationErrors: [],
+        draftExists: false,
+        exportModal: false,
+        exportFilename: '',
+        toastMsg: null,
 
         initTheme() {
           const saved = localStorage.getItem('theme');
@@ -1265,6 +1483,7 @@
 
         async init() {
           this.initTheme();
+          this.draftExists = !!localStorage.getItem(DRAFT_KEY);
           try {
             const r = await fetch(`${API_BASE}/api/schema`);
             this.schema = await r.json();
@@ -1405,11 +1624,142 @@
           finally { this.sl = { ...this.sl, [k]: false }; }
         },
 
-        submit() { this.jsonOut = JSON.stringify(this.buildPayload(), null, 2); setTimeout(() => document.querySelector('.json-pre')?.scrollIntoView({ behavior: 'smooth' }), 80); },
+        submit() {
+          const errs = this.validate();
+          this.validationErrors = errs;
+          if (errs.length > 0) {
+            // Open sections with errors
+            for (const e of errs) {
+              this.openSecs = { ...this.openSecs, [e.secId]: true };
+            }
+            setTimeout(() => document.querySelector('.val-banner')?.scrollIntoView({ behavior: 'smooth' }), 80);
+            return;
+          }
+          this.jsonOut = JSON.stringify(this.buildPayload(), null, 2);
+          this.saveDraft();
+          setTimeout(() => document.querySelector('.json-pre')?.scrollIntoView({ behavior: 'smooth' }), 80);
+        },
+
+        validate() {
+          if (!this.schema) return [];
+          const errs = [];
+          for (const sec of this.schema.sections) {
+            if (!this.isSectionVisible(sec)) continue;
+
+            if (sec.repeatable) {
+              const insts = this.getInst(sec.id);
+              // Skip section entirely if no instance has been started
+              const startedInsts = insts.filter((_, i) =>
+                (sec.fields || []).some(f => {
+                  const v = this.getInstVal(sec.id, i, f.id);
+                  const sel = this.getSel(sec.id, i, f.id);
+                  return (v && v !== '') || (sel && sel.label);
+                })
+              );
+              if (startedInsts.length === 0) continue;
+              // Validate each instance that has at least some data
+              for (let i = 0; i < insts.length; i++) {
+                const hasAnyData = (sec.fields || []).some(f => {
+                  const v = this.getInstVal(sec.id, i, f.id);
+                  const sel = this.getSel(sec.id, i, f.id);
+                  return (v && v !== '') || (sel && sel.label);
+                });
+                if (!hasAnyData) continue;
+                for (const f of sec.fields || []) {
+                  if (!f.required) continue;
+                  const v = this.getInstVal(sec.id, i, f.id);
+                  const sel = this.getSel(sec.id, i, f.id);
+                  const filled = (v && v !== '') || (sel && sel.label);
+                  if (!filled) {
+                    const repeatLabel = sec.repeat_label || 'Entrée';
+                    errs.push({
+                      secId: sec.id,
+                      section: sec.title,
+                      field: f.id,
+                      instIdx: i,
+                      label: `${repeatLabel} #${i + 1} → ${f.label}`
+                    });
+                  }
+                }
+              }
+            } else {
+              for (const f of sec.fields || []) {
+                if (!f.required) continue;
+                const v = this.svals[f.id];
+                const sel = this.getSel(sec.id, 0, f.id);
+                const filled = (v !== undefined && v !== '' && v !== null) || (sel && sel.label);
+                if (!filled) errs.push({ secId: sec.id, section: sec.title, field: f.id, instIdx: null, label: f.label });
+              }
+            }
+          }
+          return errs;
+        },
+
+        isFieldErr(secId, fieldId) {
+          return this.validationErrors.some(e => e.secId === secId && e.field === fieldId);
+        },
+
+        // ── Draft persistence ──
+        saveDraft() {
+          const state = { svals: this.svals, instMap: this.instMap, ss: this.ss, ms: this.ms, sq: this.sq };
+          localStorage.setItem(DRAFT_KEY, JSON.stringify(state));
+          this.draftExists = true;
+          this.showToast('💾 Brouillon sauvegardé !');
+        },
+
+        loadDraft() {
+          const raw = localStorage.getItem(DRAFT_KEY);
+          if (!raw) return;
+          try {
+            const state = JSON.parse(raw);
+            this.svals = state.svals || {};
+            this.instMap = state.instMap || {};
+            this.ss = state.ss || {};
+            this.ms = state.ms || {};
+            this.sq = state.sq || {};
+            this.showToast('📂 Brouillon restauré !');
+          } catch (e) { console.error('Draft load error:', e); }
+        },
+
+        clearDraft() {
+          if (!confirm('Effacer le brouillon sauvegardé ?')) return;
+          localStorage.removeItem(DRAFT_KEY);
+          this.draftExists = false;
+          this.showToast('🗑️ Brouillon effacé.');
+        },
+
+        showToast(msg) {
+          this.toastMsg = msg;
+          setTimeout(() => { this.toastMsg = null; }, 2800);
+        },
+
+        // ── Export JSON ──
+        openExport() {
+          const title = (this.svals.title_main || 'datacite').toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 40);
+          const date = new Date().toISOString().slice(0, 10);
+          this.exportFilename = `datacite_${title}_${date}.json`;
+          this.exportModal = true;
+        },
+
+        doExport() {
+          if (!this.jsonOut) return;
+          const blob = new Blob([this.jsonOut], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = this.exportFilename || 'datacite.json';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          this.exportModal = false;
+          this.showToast('✅ Fichier téléchargé !');
+        },
 
         buildPayload() {
           const out = {
             titles: [], creators: [], contributors: [], subjects: [], descriptions: [], types: [],
+            rightsList: [], relatedIdentifiers: [], fundingReferences: [],
             publicationYear: parseInt(this.svals.publication_year) || new Date().getFullYear(),
             publisher: this.schema.meta?.publisher_default || 'BioPortal'
           };
@@ -1436,7 +1786,10 @@
                     obj.nameType = 'Personal';
                   }
                   if (sec.id === 'creators') creatorsData.push(obj);
-                  if (sec.output?.path) out[sec.output.path].push(obj);
+                  if (sec.output?.path) {
+                    if (!out[sec.output.path]) out[sec.output.path] = [];
+                    out[sec.output.path].push(obj);
+                  }
                 }
               }
             } else {
@@ -1480,6 +1833,13 @@
               descriptionType: 'TechnicalInfo',
               lang: 'fr'
             });
+          }
+
+          // Cohort age composite: combine age value + unit into one description
+          const ageVal = this.svals['cohort_age_value'];
+          const ageUnit = this.svals['cohort_age_unit'] || 'weeks';
+          if (ageVal !== undefined && ageVal !== '' && ageVal !== null) {
+            out.descriptions.push({ description: `Cohort age: ${ageVal} ${ageUnit}`, descriptionType: 'TechnicalInfo' });
           }
 
           return out;
@@ -1541,13 +1901,21 @@
             const raw = sec.repeatable ? this.getInstVal(sec.id, idx, field.id) : (this.svals[field.id] ?? field.default ?? '');
             if (raw === '' || raw === null || raw === undefined) return null;
             if (o.mode === 'set_int') return parseInt(raw) || raw;
+            // vocabulary-backed select: resolve label and id from vocabulary
+            if (field.use_vocabulary_as_options && field.vocabulary) {
+              const items = this.vocab(field.vocabulary);
+              const found = items.find(it => it.value === raw);
+              if (found && o.tpl) {
+                return this._tpl(o.tpl, { '$value': found.value, '$label': found.label, '$id': found.id || '' });
+              }
+            }
             return o.tpl ? this._tpl(o.tpl, { '\$value': String(raw) }) : raw;
           }
           if (field.type === 'api_search' || field.type === 'preset_or_search') {
             const sel = this.getSel(sec.id, idx, field.id); if (!sel?.label || sel.id === '__OTHER__') return null;
             if (o.obj_key && o.mode === 'wrap_array' && o.map) { const m = this._tpl(o.map, { '\$id': sel.id || '', '\$label': sel.label }); return m ? [m] : null; }
             const scheme = sel.scheme === 'ManualInput' ? 'ManualInput' : (sel.scheme || field.api?.replace('ols_', '').toUpperCase() || 'Custom');
-            const v = this._tpl(o.tpl, { '\$label': sel.label, '\$id': sel.id || '', '\$scheme': scheme });
+            const v = this._tpl(o.tpl, { '\$label': sel.label, '\$id': scheme === 'ManualInput' ? sel.label : sel.id, '\$scheme': scheme });
             if (field.show_xrefs && sel.xrefs && Object.keys(sel.xrefs).length > 0 && v) { v.subjectDescription = sel.sublabel || ''; v.identifiers = Object.entries(sel.xrefs).map(([, x]) => ({ identifierScheme: x.label, identifier: x.id, identifierURI: x.uri })); }
             return v;
           }
